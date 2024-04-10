@@ -20,3 +20,7 @@ You'll also need https://github.com/jon-gilbert/openscad_attachable_text3d
 ## Openscad Objects
 You'll also need https://github.com/jon-gilbert/openscad_objects. 
 
+# Author & License
+
+This library is copyright 2023-2024 Jonathan Gilbert <jong@jong.org>, and released for use under the [MIT License](LICENSE.md).
+
