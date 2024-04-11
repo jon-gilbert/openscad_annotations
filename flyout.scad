@@ -1,3 +1,12 @@
+// LibFile: flyout.scad
+//   Methods for producing flyout elements. 
+//
+// FileSummary: dimensioning methods and functions
+// Includes:
+//   include <openscad_annotations/flyout.scad>
+//
+
+include <openscad_annotations/common.scad>
 
 // Module: flyout()
 // Usage:
@@ -186,6 +195,4 @@ module flyout_to_pos(pos, leader=5, thickness=0.5, text=undef, color="black", al
                     children();
 }
 
-
-function anno_ok_to_annotate() = true;
 
