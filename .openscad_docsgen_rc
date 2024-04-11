@@ -1,0 +1,9 @@
+DocsDirectory: docs/
+TargetProfile: githubwiki
+ProjectName: openscad_annotations
+IgnoreFiles:
+  tmp_*.scad
+DefineHeader(BulletList): Todo
+DefineHeader(BulletList): Side Effects
+DefineHeader(Table;Headers=^Attribute Name|^Datatype|What It Represents): Attributes
+DefineHeader(Table;Headers=^Anchor Name|Position Description): Named Anchors
