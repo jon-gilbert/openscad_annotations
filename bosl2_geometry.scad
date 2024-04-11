@@ -93,7 +93,7 @@ module parent_geom_debug() {
 //   geom = An instantiated Geom object. Default: `undef`, in which case the geometry is pulled from the parent shape
 //   thickness = Used to set the width of the flyout and text. Default: `0.5`
 // Example:
-//   cyl(d1=30, d2=13, h=30, orient=FWD+UP)
+//   cyl(d1=30, d2=13, h=30, orient=LEFT+UP)
 //       #parent_geom_debug_axis();
 //
 module parent_geom_debug_axis(geom=undef, thickness=0.5) {
@@ -144,7 +144,7 @@ module parent_geom_debug_axis(geom=undef, thickness=0.5) {
 //       }
 //   }
 //   // now, invoke the plate, and debug its named anchors. For fun, spin the plate a bit:
-//   plate(spin=20)
+//   plate()
 //       #parent_geom_debug_anchors();
 //
 module parent_geom_debug_anchors(geom=undef, full=false, thickness=0.5) {
@@ -152,7 +152,7 @@ module parent_geom_debug_anchors(geom=undef, full=false, thickness=0.5) {
     anchors = geom_anchors(geom_, default=[]);
     for (i=idx(anchors)) {
         anchor = anchors[i];
-        flyout_to_pos(anchor[1], leg1=15 * (i + 1), leg2=5 * (i + 1), thickness=thickness)
+        flyout_to_pos(anchor[1], leg1=15 + (3 * (i + 1)), leg2=15 + (3 * (i + 1)), thickness=thickness)
             attach("flyout-text", LEFT)
                 attachable_text3d_multisize(
                     (full)
