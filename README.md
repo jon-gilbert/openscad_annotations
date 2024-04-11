@@ -14,6 +14,7 @@ These are library files originally developed for the 507 project. They provide m
 ![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/annotate/annotate_fig1.png)
 ![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/mechanical/mechanical_17.png)
 
+Full details on how to implement the annotations shown here are at https://github.com/jon-gilbert/openscad_annotations/wiki 
 
 # Installation
 `openscad_annotations` is written and tested on OpenSCAD 2021.01, the most recent GA release of OpenSCAD. Visit https://openscad.org/ for installation instructions.
