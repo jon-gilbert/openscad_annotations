@@ -1,12 +1,12 @@
 // LibFile: bosl2_geometry.scad
-//   Reinterpretaion / abstraction of BOSL2's `$parent_geom` list into an Object.
+//   Reinterpretaion & abstraction of BOSL2's `$parent_geom` list into an Object, and 
+//   modules and functions to help debug parent geometries.
 //
 // Includes:
-//   include <bosl2_geometry.scad>
+//   include <openscad_annotations/bosl2_geometry.scad>
 //
 /// Wow. So, I really didn't want to write this.
 
-include <object_common_functions.scad>
 include <openscad_annotations/common.scad>
 include <openscad_annotations/flyout.scad>
 
@@ -18,7 +18,7 @@ HIGHLIGHT_COLOR = "OrangeRed";
 
 
 // Module: parent_geom_debug()
-// Synosis: Display geometry debugging information
+// Synopsis: Display geometry debugging information
 // Usage:
 //   [ATTACHABLE] parent_geom_debug();
 // Description:
@@ -26,6 +26,9 @@ HIGHLIGHT_COLOR = "OrangeRed";
 // Arguments: `parent_geom_debug()` accepts no arguments.
 // Todo:
 //   currently uses `flyout_to_pos()` to the shape's centerpoint, but what if instead it was to the RIGHT+TOP edge of the shape?
+// Example:
+//   sphere(20)
+//       parent_geom_debug();
 //
 module parent_geom_debug() {
     geom = Geom();
@@ -89,6 +92,9 @@ module parent_geom_debug() {
 // Arguments:
 //   geom = An instantiated Geom object. Default: `undef`, in which case the geometry is pulled from the parent shape
 //   thickness = Used to set the width of the flyout and text. Default: `0.5`
+// Example:
+//   cyl(d1=30, d2=13, h=30, orient=FWD+UP)
+//       #parent_geom_debug_axis();
 //
 module parent_geom_debug_axis(geom=undef, thickness=0.5) {
     geom_ = _first([ geom, Geom() ]);
@@ -106,7 +112,7 @@ module parent_geom_debug_axis(geom=undef, thickness=0.5) {
 
 
 // Module: parent_geom_debug_anchors()
-// Synopsis: Display anchor debugging information for a given shape
+// Synopsis: Display named anchor debugging information for a given shape
 // Usage:
 //   parent_geom_debug_anchors();
 //   parent_geom_debug_anchors(<geom=undef>, <full=false>, <thickness=0.5>);
@@ -122,6 +128,24 @@ module parent_geom_debug_axis(geom=undef, thickness=0.5) {
 //   geom = An instantiated Geom object. Default: `undef`, in which case the geometry is pulled from the parent shape
 //   full = If set to `true`, the full information of a named anchor is displayed. Default: `false`
 //   thickness = Used to set the width of the flyout and text. Default: `0.5`
+// Example:
+//   // this "plate" module sets up four named anchors:
+//   module plate(anchor=CENTER, spin=0, orient=UP) {
+//       size = [20, 20, 1];
+//       anchors = [
+//           named_anchor("A", [-10, -10, 1], UP, 0),
+//           named_anchor("B", [-10, 10, 1], UP, 0),
+//           named_anchor("C", [10, 10, 1], UP, 0),
+//           named_anchor("D", [10, -10, 1], UP, 0),
+//           ];
+//       attachable(anchor, spin, orient, size=size, anchors=anchors) {
+//           cuboid(size, anchor=CENTER);
+//           children();
+//       }
+//   }
+//   // now, invoke the plate, and debug its named anchors. For fun, spin the plate a bit:
+//   plate(spin=20)
+//       #parent_geom_debug_anchors();
 //
 module parent_geom_debug_anchors(geom=undef, full=false, thickness=0.5) {
     geom_ = _first([ geom, Geom() ]);
@@ -169,7 +193,7 @@ module parent_geom_debug_anchors(geom=undef, full=false, thickness=0.5) {
 //
 // Example: a basic boundary around a basic sphere:
 //   sphere(d=20)
-//      #parent_geom_bounding_box();
+//      #parent_geom_debug_bounding_box();
 //
 module parent_geom_debug_bounding_box(geom=undef, size=undef, vnf=undef, width=0.5, anchor=CENTER, spin=0, orient=UP) {
     geom_ = _first([geom, Geom()]);
