@@ -7,7 +7,8 @@
 /// Wow. So, I really didn't want to write this.
 
 include <object_common_functions.scad>
-include <flyout.scad>
+include <openscad_annotations/common.scad>
+include <openscad_annotations/flyout.scad>
 
 
 // Section: Geometry Debugging Modules
@@ -311,7 +312,6 @@ function path_from_center_to_vector(vec, geom=undef, cp=CENTER) =
 
 /// Section: Misc Glue Functions
 ///
-function _defined_and_nonzero(a) = _defined(a) && a != 0;
 
 /// max_vnf set:
 /// max_vnf_x(), min_vnf_x(): given a VNF structure (BOSL2specific) find 
