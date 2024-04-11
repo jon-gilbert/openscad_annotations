@@ -371,24 +371,23 @@ module partno(partno, start_new=false) {
 //   from the parent to illustrate its placement. In addition, a thin leader line is drawn between the 
 //   parent and child, clarifying placement and relation.
 //
-// Example: simple `partno_attach()` relation:
-//   EXPAND_PARTS = true;
-//   a = Axle(["diameter", 5, "length", 20, "style", "xaxle"]);
+// Example: a simple `partno_attach()` relation, with `EXPAND_PARTS` set as `false` (which is the default):
+//   EXPAND_PARTS = false;
 //   label("A")
-//       axle_mount(a, axle_mount_length=5) {
+//       tube(id=4, od=8, h=5) {
 //           annotate(show=["label", "partno"]);
 //           partno_attach(CENTER, undef, 0, 1)
-//               axle(a)
+//               cyl(d=4, h=10)
 //                   annotate(show=["label", "partno"]); 
 //       }
 //
-// Example: same `partno_attach()` relation, but without expansion: attachment works as expected:
-//   a = Axle(["diameter", 5, "length", 20, "style", "xaxle"]);
+// Example: the same `partno_attach()` relation, with expansion enabled:
+//   EXPAND_PARTS = true;
 //   label("A")
-//       axle_mount(a, axle_mount_length=5) {
+//       tube(id=4, od=8, h=5) {
 //           annotate(show=["label", "partno"]);
 //           partno_attach(CENTER, undef, 0, 1)
-//               axle(a)
+//               cyl(d=4, h=10)
 //                   annotate(show=["label", "partno"]); 
 //       }
 //
@@ -525,21 +524,7 @@ module spec(list) {
 //
 // Todo:
 //   Currently, `spec()` and `obj()` conflict with each other, and until that gets resolved, don't use them both on the same annotation.
-//
-// Example: a basic object annotation. An Axle object is created passed to `axle()`, which is then annotated. Note there is no explicit call to `obj()`: this is done within the `axle()` module:
-//   a = Axle(["diameter", 10, "length", 30, "style", "xaxle"]);
-//   axle(a)
-//     annotate(show=["obj"]);
-//
-// Example: child objects should have correctly set annotation blocks. Note the use of `anchor` when annotating the axle and pulley, to keep the flyout blocks from overlapping. 
-//   a = Axle(["diameter", 10, "length", 30, "style", "xaxle"]);
-//   p = Pulley(["axle", a, "diameter", 30, "height", 20]);
-//   pulley(p) {
-//     annotate(show=["obj"], anchor=FWD);
-//     attach("axle")
-//       axle(a)
-//         annotate(show=["obj"], anchor=TOP);
-//   }
+//   obj() documentation is lacking, only because I don't feel like providing a mythical Object handler. 507common has the best examples, it'll be clearer in that repo.
 //
 module obj(obj=[], dimensions=[], flyouts=[]) {
     log_info_if(( !_defined(obj) && !_defined(dimensions) && !_defined(flyouts) ), 
@@ -626,31 +611,6 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //             cuboid(20)
 //               annotate(show=["ALL"]);
 //
-// Example: Annotation of an object. Notice that `axle()` is setting `obj()` for us:
-//   a = Axle(["diameter", 5, 
-//             "length", 15, 
-//             "style", "xaxle", 
-//             "lockfit", true]);
-//   label("A")
-//     axle(a)
-//       annotate(show=["ALL"]);
-//
-// Example: Object annotation inherit to children; in this case, the `axle_mount()` is being annotated, and it displays the `obj` entry from its parent. 
-//   a = Axle(["diameter", 5, 
-//             "length", 15, 
-//             "style", "xaxle", 
-//             "lockfit", true]);
-//   label("A")
-//     axle(a)
-//       attach(CENTER)
-//         axle_mount(a, axle_mount_length=6)
-//           annotate("mount", show=["ALL"]);
-//
-// Example: Weights are not based on objects, but a specification can be crafted and applied nonetheless. This example *only* has a `spec`, there are no other annotations set for this model:
-//   spec([["Weight"], ["diameter", 20], ["height", 8]])
-//     weight(20, 8)
-//       annotate(show=["ALL"]);
-//
 // Example: Excluding annotation types from being annotated, even if they are present, won't show them. In this case, only the part-number is shown:
 //   label("A")
 //     partno(10)
@@ -663,26 +623,23 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //       annotate(show=["partno"]);
 //
 // Example: As the parent orientation changes, so does the positioning of the parent. `annotate()` will reposition and reorient its flyout text to remain consitently oriented towards `FWD`:
-//   p = Pulley(["diameter", 30, "height", 30, 
-//         "axle", Axle(["diameter", 10, "length", 40])
-//         ]);
 //   xdistribute(spacing=60) {
 //      ydistribute(spacing=60) {
-//         label("A") pulley(p, orient=UP) annotate("bcdef");
-//         label("A") pulley(p, orient=DOWN) annotate("bcdef");
-//         label("A") pulley(p, orient=LEFT) annotate("bcdef");
+//         label("A") cyl(d=30, h=30, orient=UP)   annotate("bcdef");
+//         label("A") cyl(d=30, h=30, orient=DOWN) annotate("bcdef");
+//         label("A") cyl(d=30, h=30, orient=LEFT) annotate("bcdef");
 //      }
 //      ydistribute(spacing=40) {
-//         label("A") pulley(p, orient=RIGHT) annotate("bcdef");
-//         label("A") pulley(p, orient=FWD) annotate("bcdef");
-//         label("A") pulley(p, orient=BACK) annotate("bcdef");    
+//         label("A") cyl(d=30, h=30, orient=RIGHT) annotate("bcdef");
+//         label("A") cyl(d=30, h=30, orient=FWD)   annotate("bcdef");
+//         label("A") cyl(d=30, h=30, orient=BACK)  annotate("bcdef");    
 //      }
 //   }
 //
 // Todo:
-//    ...err... Now that we're using `flyout()`, test to see what happens if `annotate()` is set with anchor to something other than `RIGHT`
-//    gotta document behavior on orientation vs rotation with flyouts. 
-//    The dfault of blocks to be shown should be "ALL", and `show` should exist to *limit* what is shown.
+//    gotta document behavior on orientation vs rotation with flyouts.
+//    The default of blocks to be shown should be "ALL", and `show` should exist to *limit* what is shown.
+//    obj() documentation is lacking, only because I don't feel like providing a mythical Object handler. 507common has the best examples, it'll be clearer in that repo.
 //
 module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef, obj=undef, anchor=RIGHT, color=undef, alpha=undef, leader_len=undef) {
     supported_annos = ["label", "partno", "spec", "obj", "desc"];
