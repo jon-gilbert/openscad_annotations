@@ -14,11 +14,19 @@ You'll need the Belfry OpenSCAD Library (v.2). Authored by a number of contribut
 
 To download this library, follow the instructions provided at https://github.com/BelfrySCAD/BOSL2#installation
 
-## Attachable Text3d
-You'll also need https://github.com/jon-gilbert/openscad_attachable_text3d 
+## Other Libraries
+You'll also need 
+[openscad_objects](https://github.com/jon-gilbert/openscad_objects) ([direct library download](https://raw.githubusercontent.com/jon-gilbert/openscad_objects/main/object_common_functions.scad)), 
+[openscad_attachable_text3d](https://github.com/jon-gilbert/openscad_attachable_text3d) ([direct](https://raw.githubusercontent.com/jon-gilbert/openscad_attachable_text3d/main/attachable_text3d.scad)), and
+[openscad_logging](https://github.com/jon-gilbert/openscad_logging) ([direct](https://raw.githubusercontent.com/jon-gilbert/openscad_logging/main/logging.scad)).
 
-## Openscad Objects
-You'll also need https://github.com/jon-gilbert/openscad_objects. 
+## openscad_annotations
+Download the most recent tagged release and download its compressed tgz or zip file, whichever you're more comfortable with. Uncompress and extract the folder within the release, which should be named something like `openscad_annoatations-0.0`. Rename that folder to `openscad_annotations`, and move that folder to the OpenSCAD library directory for your platform:
+
+* Linux: $HOME/.local/share/OpenSCAD/libraries/
+* Mac OS X: $HOME/Documents/OpenSCAD/libraries/
+* Windows: My Documents\OpenSCAD\libraries\
+
 
 # Author & License
 
