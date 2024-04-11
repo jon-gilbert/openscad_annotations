@@ -8,46 +8,45 @@
 //   MECH_NUMBER = "EX";
 //
 
-include <object_common_functions.scad>
-include <attachable_text3d.scad>
+include <openscad_annotations/common.scad>
 include <openscad_annotations/flyout.scad>
 
-// Section: Constants
-//
-// Constant: MECH_NUMBER
-// Description:
-//   The global `MECH_NUMBER` identifies the model-id of the mechanism in a given .scad file. You **should** set this constant within your 
-//   model file somewhere for part-numbers to work well. You may only set `MECH_NUMBER` once.
-//   .
-//   Throughout the annotation.scad documentation below, and in the examples, we use `EX` as a `MECH_NUMBER` 
-//   (to indicate that it is an "example"). 
-//   .
-//   Currently: `false`, so as to indicate not-set.
+/// Section: Constants
+///
+/// Constant: MECH_NUMBER
+/// Description:
+///   The global `MECH_NUMBER` identifies the model-id of the mechanism in a given .scad file. You **should** set this constant within your 
+///   model file somewhere for part-numbers to work well. You may only set `MECH_NUMBER` once.
+///   .
+///   Throughout the annotation.scad documentation below, and in the examples, we use `EX` as a `MECH_NUMBER` 
+///   (to indicate that it is an "example"). 
+///   .
+///   Currently: `false`, so as to indicate not-set.
 MECH_NUMBER = false;
 
-// Constant: RENDER_ANNOTATIONS
-// Description: 
-//   Boolean specifying whether annotations should be present during 
-//   rendering (as opposed to during preview). 
-//   Currently: `false`
-// See Also: anno_ok_to_annotate()
+/// Constant: RENDER_ANNOTATIONS
+/// Description: 
+///   Boolean specifying whether annotations should be present during 
+///   rendering (as opposed to during preview). 
+///   Currently: `false`
+/// See Also: anno_ok_to_annotate()
 RENDER_ANNOTATIONS = false;
 
-// Constant: PREVIEW_ANNOTATIONS
-// Description: 
-//   Boolean specifying whether annotations should be present during 
-//   previews (as opposed to during a proper render). 
-//   Currently: `true`
-// See Also: anno_ok_to_annotate()
+/// Constant: PREVIEW_ANNOTATIONS
+/// Description: 
+///   Boolean specifying whether annotations should be present during 
+///   previews (as opposed to during a proper render). 
+///   Currently: `true`
+/// See Also: anno_ok_to_annotate()
 PREVIEW_ANNOTATIONS = true;
 
-// Constant: EXPAND_PARTS
-// Description: 
-//   Boolean variable that can instruct models using `partno()` to 
-//   "part-out" their models, by expanding deliniated parts away 
-//   from their modeled position. 
-//   Currently: `false`
-// See Also: partno()
+/// Constant: EXPAND_PARTS
+/// Description: 
+///   Boolean variable that can instruct models using `partno()` to 
+///   "part-out" their models, by expanding deliniated parts away 
+///   from their modeled position. 
+///   Currently: `false`
+/// See Also: partno()
 EXPAND_PARTS = false;
 
 
@@ -78,101 +77,6 @@ $_anno_obj = undef;
 ///   Holds the `obj-measure` annotation list-of-lists within the model.
 $_anno_obj_measure = [[],[]];
 
-
-// Section: Annotation Object Functions
-//   These functions leverage the OpenSCAD Object library to create an Annotation Object and its attribute accessors.
-//   See https://github.com/jon-gilbert/openscad_objects/blob/main/docs/HOWTO.md for a quick primer on constructing and 
-//   using Objects; and https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md for 
-//   details on Object functions. 
-// 
-// Subsection: Construction
-// 
-// Function: Annotation()
-// Description:
-//   Given either a variable list of attributes and values, or an existing object from 
-//   from which to mutate, constructs a new `annotation` object list and return it. 
-//   .
-//   `Annotation()` returns a list containing an opaque object. See `Object()` in https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md#function-object.
-// Usage:
-//   obj = Annotation();
-//   obj = Annotation(vlist);
-//   obj = Annotation(vlist, mutate=obj);
-// Arguments:
-//   ---
-//   vlist = Variable list of attributes and values, eg: `[["length", 10], ["style", undef]]`. Default: `[]`. 
-//   mutate = An existing `anno` object on which to pre-set object values. Default: `[]`. 
-// Example:
-//   anno = Annotation();
-function Annotation(vlist=[], mutate=[]) = Object("Annotation", Annotation_attrs, vlist=vlist, mutate=mutate);
-
-// Constant: Annotate_attributes
-// Description:
-//   A list of all `anno` attributes.
-// Attributes:
-//   mech_number = s = The mechanism number of the model, eg `001`, as a string. Default: the value of `MECH_NUMBER`
-//   label = s = The "label" of the model, eg `A` as in "Part A, slot B", and so on. Labels are hierarchally applied. No default.
-//   partno = s = The part-number of the model. Part-numbers automatically have the object's `mech_number` prefixed. Part-numbers are cumulative hierarchally. No default.
-//   spec = l = A list of `[key, value]` pairs that describe the model. No default.
-//   obj = o = An Object of any type that produced the model. No default.
-//   desc = s = A freeform description of the model. No default.
-//   color = s = The color to use when annotating models. Default: `black`
-//   alpha = i = The alpha, or transparency used when annotating model. Default: `0.5`
-//   leader_len = i = The length of leader lines that connect models to flyouts. Default: `8`
-Annotation_attrs = [
-    ["mech_number", "s", (!MECH_NUMBER) ? undef : MECH_NUMBER ],
-    "label=s", 
-    "partno=s", 
-    ["spec", "l", []], 
-    ["obj", "l", []], 
-    "desc=s", 
-    "color=s=black", 
-    "alpha=s=0.5", 
-    "leader_len=i=8"
-    ];
-
-// Subsection: Attribute Accessors 
-//   Each of the attributes listed in `Annotate_attributes` has an accessor built for it, a function 
-//   for getting and setting the attribute's value within the Annotate object. 
-//   Each of the attributes listed above has an accessor with the same syntax as `anno_label()`, below.
-//
-// Function: anno_label()
-// Usage:
-//   value = anno_label(anno, <default=undef>);
-//   new_anno = anno_label(anno, nv=new_value);
-// Description:
-//   Mutatable object accessor for the `label` attribute. Given an `anno` object, operate on that object. The operation
-//   depends on what other options are passed. 
-//   .
-//   Calls to `anno_label()` with no additional options will look up the 
-//   value of `label` within the object and return it. If a `default` option is provided to `anno_label()` and 
-//   `label` is unset, the value of `default` will be returned instead. 
-//   . 
-//   Calls to `anno_label()` with a `nv` (new-value) option will return a wholly new Annotate object, whose 
-//   `label` attribute is set to the value of `nv`. *The existing Annotate object is unmodified.*
-// Arguments:
-//   anno = An Annotate object. No default. 
-//   ---
-//   default = If provided, and if there is no value currently set for `label`, `anno_label()` will instead return this provided value. No default. 
-//   nv = If provided, `anno_label()` will return a new Annotate object with the new value set for `label`. The existing `anno` object is unmodified. No default. 
-// Continues:
-//   It is not an error to call `anno_label()` with both `default` and `nv`, however if they are both defined only the `nv` "set" 
-//   operation is performed. Note that setting `nv` to `undef` expecting to clear the value of `label` won't produce a new object; 
-//   to clear the value of `label`, you must use `obj_accessor_unset()`. 
-// Example:
-//   anno = Annotate();
-//   val = anno_label(anno);
-// Example:
-//   anno = Annotate();
-//   new_anno = anno_label(anno, nv="L");
-function anno_mech_number(obj, default=undef, nv=undef) = obj_accessor(obj, "mech_number", default=default, nv=nv);
-function anno_label(obj, default=undef, nv=undef)       = obj_accessor(obj, "label", default=default, nv=nv);
-function anno_partno(obj, default=undef, nv=undef)      = obj_accessor(obj, "partno", default=default, nv=nv);
-function anno_spec(obj, default=undef, nv=undef)        = obj_accessor(obj, "spec", default=default, nv=nv);
-function anno_obj(obj, default=undef, nv=undef)         = obj_accessor(obj, "obj", default=default, nv=nv);
-function anno_desc(obj, default=undef, nv=undef)        = obj_accessor(obj, "desc", default=default, nv=nv);
-function anno_color(obj, default=undef, nv=undef)       = obj_accessor(obj, "color", default=default, nv=nv);
-function anno_alpha(obj, default=undef, nv=undef)       = obj_accessor(obj, "alpha", default=default, nv=nv);
-function anno_leader_len(obj, default=undef, nv=undef)  = obj_accessor(obj, "leader_len", default=default, nv=nv);
 
 
 // Section: Annotate Modules
@@ -412,8 +316,6 @@ module desc(name) {
 //                sphere(d=10)
 //                  annotate(show="ALL");
 //        }
-//
-// See Also: MECH_NUMBER, EXPAND_PARTS
 //
 module partno(partno, start_new=false) {
     $_anno_partno = (start_new)
@@ -687,17 +589,17 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //   ---
 //   show = A list of annotation types to display, if there is a value for them. Default: `["label", "desc"]`
 //   anchor = A named standard anchor **on the parent** to the `annotate()` call. Default: `RIGHT`
-//   label = Sets a label if one is not already set within the child hirearchy above this `annotation()` call. No default. 
-//   partno = Sets a part-number if one is not already set within the child hirearchy above this `annotation()` call. No default. 
-//   spec = Sets a specification list if one is not already set within the child hirearchy above this `annotation()` call. No default. 
-//   obj = Sets an object if one is not already set within the child hirearchy above this `annotation()` call. No default. 
+//   label = Sets a label if one is not already set within the child hirearchy above this `annotate()` call. No default. 
+//   partno = Sets a part-number if one is not already set within the child hirearchy above this `annotate()` call. No default. 
+//   spec = Sets a specification list if one is not already set within the child hirearchy above this `annotate()` call. No default. 
+//   obj = Sets an object if one is not already set within the child hirearchy above this `annotate()` call. No default. 
 //   leader_len = Defines the length of the leader lines used for flyouts. Default: `30`
 //   color = Sets the color the annotation is displayed in. Default: `black`
 //   alpha = Sets the transparency the annotation is displayed with. Default: `0.5`
 //
 // Continues:
 //   Orientation is an oddly-solved problem for annotation models that are attached to parents.
-//   `annotation()` takes steps to keep the text oriented forward to the default viewport, towards the negative Y-axis
+//   `annotate()` takes steps to keep the text oriented forward to the default viewport, towards the negative Y-axis
 //   or `FWD`. Those steps try to step in when the parent's orientation is other than `UP`: for 
 //   example, if the parent's orientation is `FWD`, the annotation's orientation is adjusted to 
 //   `BACK`, to keep the text viewable. This activity breaks down a little when parent orientation 
@@ -866,206 +768,6 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
 }
 
 
-
-// Module: flyout()
-// Usage:
-//   flyout();
-//   flyout() [CHILDREN];
-//   flyout(<leader=5>, <angle=45>, <thickness=0.5>, <text=undef>, <color="black">, <alpha=0.5>, <leg1=undef>, <leg2=undef>, <anchor=CENTER>, <spin=0>, <orient=UP>);
-//
-// Description:
-//   Creates a flyout line from one attachable point to another. Flyouts have two line leg segments angled between them, and 
-//   provide two named anchors for positioning between model elements, suitable for calling attention to model aspects. 
-//   .
-//   The leg lengths are directed by the `leader` argument; if `leg1` or `leg2` are specified, they will be applied instead to 
-//   the two leg lengths. The angle of the first lag from 0 on the Z-axis is directed by `angle`, which may be any positive value. 
-//   .
-//   The flyout and all subsequent children (attached or not) to the flyout will be colored with the `color` argument. 
-//   If you need finer control on the colorization of the flyout and its attachments, you can do something like:
-//   ```
-//   recolor("black") 
-//      flyout(leader=20, color=undef) 
-//         attach("flyout-text", LEFT) 
-//            recolor("red") 
-//               attachable_text3d("A!");
-//   ```
-//   .
-//   `flyout()` honors the result of `anno_ok_to_annotate()`, and will not render if that function does not 
-//   return `true`.
-//
-// Arguments:
-//   leader = The length of each part of flyout lines. Default: `5`
-//   angle = The angle of direction change of the flyout, from the Z-axis. Default: `45`
-//   thickness = The thickness of the leader lines used in the flyout. Default: `0.5`
-//   text = A string of text to be positioned at the flyout's ending. Default: `undef` (for no text)
-//   color = A string naming the color to render the flyout and children attached to the flyout (*including* the value of `text`, if present). Default: `black`
-//   alpha = Sets the alpha transparancy of the flyout and children attached to the flyout. Default: `0.5`
-//   leg1 = Set the length of the leg between the flyout's point and the flyout's angle. Default: the value of `leader`
-//   leg2 = Set the length of the leg between the flyout's angle and the flyout's text point. Default: the value of `leader`
-//   offset_len = Moves the flyout `offset_len` away and up from where `flyout-point` points to. Default: `0`
-//   anchor = Translate so anchor point is at origin `[0,0,0]`. Default: `CENTER`
-//   spin = Rotate this many degrees around the Z axis after anchoring. Default: `0`
-//   orient = Vector direction to which the model should point after spin. Default: `UP`
-//
-// Continues:
-//   It is an error to specify an `angle` value that is less than zero. It's not an error to specify an `angle` value 
-//   of `0`, but know that it will be implicitly adjusted to `0.01`, because `flyout()` uses some pretty basic 
-//   geometery to draw its flyout lines. It's not an error to specify an `angle` value in excess of 360, though
-//   the resulting flyout may not be what you expect.
-//
-// Named Anchors:
-//   flyout-point = The start, pointy-end of the flyout, where the arrow is, oriented downwards.
-//   flyout-text = The end, text-end of the flyout, where descriptive text is placed, oriented rightwards.
-// Figure: Available named anchors:
-//   expose_anchors() flyout(leader=20, thickness=2, color=undef) show_anchors(std=false);
-//
-// Example: a basic flyout:
-//   flyout();
-//
-// Example: a basic flyout with a simple line of text:
-//   flyout(text="Some text");
-//
-// Example: attaching the flyout to a specific object; and, attaching some text to the flyout:
-//   sphere(d=20)
-//     attach(TOP+RIGHT, "flyout-point", norot=true)
-//        flyout()
-//           attach("flyout-text", LEFT)
-//              attachable_text3d("Sphere", size=5);
-//
-// Example: leg & angle adjustment: `flyout()` will permit differing lengths of each leg, and of the angle:
-//   flyout(text="a", angle=30, leg1=10, leg2=3);
-//
-// Todo:
-//   offset_len kind of works, but I kind of dislike how leg2 gets crowded out a little. 
-//
-// See Also: anno_ok_to_annotate()
-//
-/*
-module flyout(leader=5, angle=45, thickness=0.5, text=undef, color="black", alpha=0.5, leg1=undef, leg2=undef, offset_len=0, anchor=CENTER, spin=0, orient=UP) {
-    if (anno_ok_to_annotate()) {
-        // build up the adj/opp of a right triangle using the two legs' dimensions:
-        leg1_ = _first([leg1, leader]);
-        leg2_ = _first([leg2, leader]);
-        assert(leg1_ >= 0);
-        assert(leg2_ >= 0);
-        angle_ = (angle > 0) ? angle : log_info_assign(0.01, "flyout(): adjusting zero-angle flyout to: ");
-        t = full_triangle([undef, undef, leg1_, angle_, undef]);
-        o = (offset_len > 0)
-            ? full_triangle([undef, undef, offset_len, angle_, undef])
-            : [0, 0, 0, 0, 0, 0];
-
-        // with the triangle legs, calculate the complete size of the bounding 
-        // rectangle. the depth comes from the flyout's thickness:
-        size = [ t[1] + leg2_ + o[1], thickness, t[0] + o[0] ];
-
-        // build a path of both legs from CENTER, to the upper angle, to the end of the second leg:
-        p = [ [0, 0, 0], [t[1], 0, t[0]], [t[1] + leg2_, 0, t[0]] ];
-        // assemble the offset len, if there are any:
-        op = [o[1], 0, o[0]];
-
-        anchors = [
-            named_anchor("flyout-point-angled", apply(left(half(size.x))  * down(half(size.z)), CENTER), -[t[0], 0, t[1]],  0),
-            named_anchor("flyout-point", apply(left(half(size.x))  * down(half(size.z)), CENTER), DOWN,  0),
-            named_anchor("flyout-text",  apply(right(half(size.x)) * up(half(size.z)),   CENTER), RIGHT, 180)
-            ];
-
-        color(_defined(color) ? color : undef, alpha=_defined(color) ? alpha : undef)
-            attachable(anchor, spin, orient, size=size, anchors=anchors) {
-                translate(op)
-                    translate([-1 * half(size.x), 0, -1 * half(size.z)])
-                            union() {
-                                stroke(p, width=thickness, endcap1="arrow2",  endcap2="round", endcap_width1=2, endcap_length1=2*3);
-                                if (_defined(text))
-                                    translate(p[2])
-                                        attachable_text3d(text, anchor=LEFT, orient=FWD);
-                            }
-                children();
-            }
-    }
-}
-*/
-
-
-// Module: flyout_to_pos()
-// Usage:
-//   flyout_to_pos(pos);
-//   flyout_to_pos(pos) [CHILDREN];
-//   flyout(pos, <leader=5>, <angle=45>, <thickness=0.5>, <text=undef>, <color="black">, <alpha=0.5>, <leg1=undef>, <leg2=undef>);
-//
-// Description:
-//   Creates a flyout line from one attachable point to another, and moves that flyout so that its point is at the absolute position `pos`. 
-//   Flyouts have two line leg segments angled between them, and provide two named anchors for positioning between 
-//   model elements, suitable for calling attention to model aspects. 
-//   .
-//   The leg lengths are directed by the `leader` argument; if `leg1` or `leg2` are specified, they will be applied instead to 
-//   the two leg lengths. The angle of the first lag from 0 on the Z-axis is directed by `angle`, which may be any positive value. 
-//   .
-//   The flyout and all subsequent children (attached or not) to the flyout will be colored with the `color` argument. 
-//   If you need finer control on the colorization of the flyout and its attachments, you can do something like:
-//   ```
-//   recolor("black") 
-//      flyout([10,10,10], leader=20, color=undef) 
-//         attach("flyout-text", LEFT) 
-//            recolor("red") 
-//               attachable_text3d("A!");
-//   ```
-//   .
-//   `flyout_to_pos()` honors the result of `anno_ok_to_annotate()`, and will not render if that function does not 
-//   return `true`.
-//
-//
-// Arguments:
-//   pos = The absolute `[x,y,z]` position at which the flyout's point is to be. No default
-//   ---
-//   leader = The length of each part of flyout lines. Default: `5`
-//   angle = The angle of direction change of the flyout, from the Z-axis. Default: `45`
-//   thickness = The thickness of the leader lines used in the flyout. Default: `0.5`
-//   text = A string of text to be positioned at the flyout's ending. Default: `undef` (for no text)
-//   color = A string naming the color to render the flyout and children attached to the flyout (*including* the value of `text`, if present). Default: `black`
-//   alpha = Sets the alpha transparancy of the flyout and children attached to the flyout. Default: `0.5`
-//   leg1 = Set the length of the leg between the flyout's point and the flyout's angle. Default: the value of `leader`
-//   leg2 = Set the length of the leg between the flyout's angle and the flyout's text point. Default: the value of `leader`
-//   offset_len = Moves the flyout `offset_len` away and up from where `flyout-point` points to. Default: `0`
-//   spin = Rotate this many degrees around the Z axis after anchoring. Default: `0`
-//
-// Continues:
-//   It is an error to specify an `angle` value that is less than zero. It's not an error to specify an `angle` value 
-//   of `0`, but know that it will be implicitly adjusted to `0.01`, because `flyout()` uses some pretty basic 
-//   geometery to draw its flyout lines. It's not an error to specify an `angle` value in excess of 360, though
-//   the resulting flyout may not be what you expect.
-//   .
-//   It is an error to not specify a `pos` position to `flyout_to_pos()`, and if `pos` is undefined an error will be logged and 
-//   `[0,0,0]` will be used in its place. 
-//
-// Example: a basic flyout, manually positioned at `[10,0,0]`:
-//   flyout_to_pos([10, 0, 0]);
-//
-// Example: a basic flyout, manually positioned at `[10,0,0]`, with a block of text attached:
-//   flyout_to_pos([10, 0, 0])
-//      attach("flyout-text", LEFT)
-//         attachable_text3d("Point", size=5);
-//
-/*
-module flyout_to_pos(pos, leader=5, angle=45, thickness=0.5, text=undef, color="black", alpha=0.5, leg1=undef, leg2=undef, offset_len=0, spin=undef) {
-    pos_ = (_defined(pos))
-        ? pos
-        : log_error_assign([0, 0, 0], "flyout_to_pos(): No position 'pos' argument available; defaulting to");
-
-    translate(pos_) 
-        sphere(r=0.00001) 
-            attach(CENTER, "flyout-point")
-                flyout(leader=leader, angle=angle, 
-                        thickness=thickness, leg1=leg1, leg2=leg2,
-                        text=text, color=color, alpha=alpha, 
-                        offset_len=offset_len, spin=spin)
-                    children();
-}
-*/
-
-
-
-
-
 // Function: anno_ok_to_annotate()
 // Usage:
 //   bool = anno_ok_to_annotate();
@@ -1102,8 +804,6 @@ module flyout_to_pos(pos, leader=5, angle=45, thickness=0.5, text=undef, color="
 //   $ openscad -D"RENDER_ANNOTATIONS=true"
 //   // rendering these models will include annotations
 //
-// See Also: PREVIEW_ANNOTATIONS, RENDER_ANNOTATIONS
-//
 function anno_ok_to_annotate() = 
     let(
         show_preview = ($preview && PREVIEW_ANNOTATIONS), 
@@ -1112,7 +812,7 @@ function anno_ok_to_annotate() =
     show_preview || show_render;
 
 
-
+/// ----------------------------------------------------------------------------------
 /// Function: anno_assemble_partno()
 /// Usage:
 ///   anno_obj = anno_assemble_partno(anno);
@@ -1250,8 +950,6 @@ function anno_list_to_block(list) = [
 
 
 
-/// --
-
 /// Function: partno2translate()
 /// Usage:
 ///   xyz_offset = partno2translate();
@@ -1378,5 +1076,101 @@ module infoblock_notok(s=10) {
             children();
         }
 }
+
+/// ----------------------------------------------------------------------------------
+/// Section: Annotation Object Functions
+///   These functions leverage the OpenSCAD Object library to create an Annotation Object and its attribute accessors.
+///   See https://github.com/jon-gilbert/openscad_objects/blob/main/docs/HOWTO.md for a quick primer on constructing and 
+///   using Objects; and https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md for 
+///   details on Object functions. 
+/// 
+/// Subsection: Construction
+/// 
+/// Function: Annotation()
+/// Description:
+///   Given either a variable list of attributes and values, or an existing object from 
+///   from which to mutate, constructs a new `annotation` object list and return it. 
+///   .
+///   `Annotation()` returns a list containing an opaque object. See `Object()` in https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md#function-object.
+/// Usage:
+///   obj = Annotation();
+///   obj = Annotation(vlist);
+///   obj = Annotation(vlist, mutate=obj);
+/// Arguments:
+///   ---
+///   vlist = Variable list of attributes and values, eg: `[["length", 10], ["style", undef]]`. Default: `[]`. 
+///   mutate = An existing `anno` object on which to pre-set object values. Default: `[]`. 
+/// Example:
+///   anno = Annotation();
+function Annotation(vlist=[], mutate=[]) = Object("Annotation", Annotation_attrs, vlist=vlist, mutate=mutate);
+
+/// Constant: Annotate_attributes
+/// Description:
+///   A list of all `anno` attributes.
+/// Attributes:
+///   mech_number = s = The mechanism number of the model, eg `001`, as a string. Default: the value of `MECH_NUMBER`
+///   label = s = The "label" of the model, eg `A` as in "Part A, slot B", and so on. Labels are hierarchally applied. No default.
+///   partno = s = The part-number of the model. Part-numbers automatically have the object's `mech_number` prefixed. Part-numbers are cumulative hierarchally. No default.
+///   spec = l = A list of `[key, value]` pairs that describe the model. No default.
+///   obj = o = An Object of any type that produced the model. No default.
+///   desc = s = A freeform description of the model. No default.
+///   color = s = The color to use when annotating models. Default: `black`
+///   alpha = i = The alpha, or transparency used when annotating model. Default: `0.5`
+///   leader_len = i = The length of leader lines that connect models to flyouts. Default: `8`
+Annotation_attrs = [
+    ["mech_number", "s", (!MECH_NUMBER) ? undef : MECH_NUMBER ],
+    "label=s", 
+    "partno=s", 
+    ["spec", "l", []], 
+    ["obj", "l", []], 
+    "desc=s", 
+    "color=s=black", 
+    "alpha=s=0.5", 
+    "leader_len=i=8"
+    ];
+
+/// Subsection: Attribute Accessors 
+///   Each of the attributes listed in `Annotate_attributes` has an accessor built for it, a function 
+///   for getting and setting the attribute's value within the Annotate object. 
+///   Each of the attributes listed above has an accessor with the same syntax as `anno_label()`, below.
+///
+/// Function: anno_label()
+/// Usage:
+///   value = anno_label(anno, <default=undef>);
+///   new_anno = anno_label(anno, nv=new_value);
+/// Description:
+///   Mutatable object accessor for the `label` attribute. Given an `anno` object, operate on that object. The operation
+///   depends on what other options are passed. 
+///   .
+///   Calls to `anno_label()` with no additional options will look up the 
+///   value of `label` within the object and return it. If a `default` option is provided to `anno_label()` and 
+///   `label` is unset, the value of `default` will be returned instead. 
+///   . 
+///   Calls to `anno_label()` with a `nv` (new-value) option will return a wholly new Annotate object, whose 
+///   `label` attribute is set to the value of `nv`. *The existing Annotate object is unmodified.*
+/// Arguments:
+///   anno = An Annotate object. No default. 
+///   ---
+///   default = If provided, and if there is no value currently set for `label`, `anno_label()` will instead return this provided value. No default. 
+///   nv = If provided, `anno_label()` will return a new Annotate object with the new value set for `label`. The existing `anno` object is unmodified. No default. 
+/// Continues:
+///   It is not an error to call `anno_label()` with both `default` and `nv`, however if they are both defined only the `nv` "set" 
+///   operation is performed. Note that setting `nv` to `undef` expecting to clear the value of `label` won't produce a new object; 
+///   to clear the value of `label`, you must use `obj_accessor_unset()`. 
+/// Example:
+///   anno = Annotate();
+///   val = anno_label(anno);
+/// Example:
+///   anno = Annotate();
+///   new_anno = anno_label(anno, nv="L");
+function anno_mech_number(obj, default=undef, nv=undef) = obj_accessor(obj, "mech_number", default=default, nv=nv);
+function anno_label(obj, default=undef, nv=undef)       = obj_accessor(obj, "label", default=default, nv=nv);
+function anno_partno(obj, default=undef, nv=undef)      = obj_accessor(obj, "partno", default=default, nv=nv);
+function anno_spec(obj, default=undef, nv=undef)        = obj_accessor(obj, "spec", default=default, nv=nv);
+function anno_obj(obj, default=undef, nv=undef)         = obj_accessor(obj, "obj", default=default, nv=nv);
+function anno_desc(obj, default=undef, nv=undef)        = obj_accessor(obj, "desc", default=default, nv=nv);
+function anno_color(obj, default=undef, nv=undef)       = obj_accessor(obj, "color", default=default, nv=nv);
+function anno_alpha(obj, default=undef, nv=undef)       = obj_accessor(obj, "alpha", default=default, nv=nv);
+function anno_leader_len(obj, default=undef, nv=undef)  = obj_accessor(obj, "leader_len", default=default, nv=nv);
 
 
