@@ -3,6 +3,17 @@ Module and function libraries for annotating OpenSCAD models
 
 These are library files originally developed for the 507 project. They provide modules and functions that wrap around and alongside OpenSCAD models which add elements of annotation around the models themselves. For example, measurementof of shape dimenions, or labeled flyouts detailing shape context that isn't available by visual inspection of the shape while it's in-scene. 
 
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/annotate/label.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/bosl2_geometry/parent_geom_debug.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/flyout/flyout_5.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/mechanical/mechanical_3.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/annotate/partno_2.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/annotate/partno_attach_2.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/mechanical/mechanical_11.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/bosl2_geometry/parent_geom_debug_bounding_box.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/annotate/annotate_fig1.png)
+![](https://github.com/jon-gilbert/openscad_annotations/wiki/images/mechanical/mechanical_17.png)
+
 
 # Installation
 `openscad_annotations` is written and tested on OpenSCAD 2021.01, the most recent GA release of OpenSCAD. Visit https://openscad.org/ for installation instructions.
