@@ -396,7 +396,7 @@ module partno(partno, start_new=false) {
 //   leader lines between children, parents are drawn with a cylinder, itself attached to the anchor point. I'd much rather that be a dashed stroke.
 //
 module partno_attach(from, to, overlap, partno=undef, norot=false, start_new=false, distance=60) {
-    partno_t_offset = neg(distance - (distance * ($t + 0.0999)));
+    partno_t_offset = -1 * (distance - (distance * ($t + 0.0999)));
 
     req_children($children);
     assert($parent_geom != undef, "No object to attach to!");
@@ -763,7 +763,8 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
                 attach(TOP, "flyout-point")
                     flyout(color=anno_color(anno), leader=anno_leader_len(anno))
                         attach("flyout-text", LEFT)
-                            attachable_text3d_multisize(text_sections);
+                            color(anno_color(anno))
+                                attachable_text3d_multisize(text_sections);
     }
 }
 
