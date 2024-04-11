@@ -6,15 +6,17 @@
 //
 // FileSummary: dimensioning methods and functions
 // Includes:
-//   include <507common/dimensioning.scad>
+//   include <openscad_annotations/dimensioning.scad>
 //
 
-LOG_LEVEL = 2;
+include <object_common_functions.scad>
+include <openscad_annotations/common.scad>
 include <openscad_annotations/bosl2_geometry.scad>
 include <attachable_text3d.scad>
 include <logging.scad>
 
 $_annotate_dimensions = [];
+
 
 // Section: Modules
 //
@@ -1308,12 +1310,5 @@ DIM_LINE_WIDTH = 0.5;
 
 DIM_EXTL_WIDTH = 0.25;
 
-
-/// Function: _first_nonzero()
-/// Synopsis: Carryover from 507common's `first_nonzero()`
-/// Description:
-///   Given a list of numerical elements, return the first defined, non-zero element in the list.
-///   NB: non-zero really does mean non-zero; a list of `[0, -1, 1]` will yield `-1`.
-function _first_nonzero(list) = [for (i = list) if (is_num(i) && i != 0) i][0];
 
 
