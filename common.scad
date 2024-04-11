@@ -1,4 +1,8 @@
 
+include <BOSL2/std.scad>
+include <object_common_functions.scad>
+include <attachable_text3d.scad>
+include <logging.scad>
 
 LOG_LEVEL = 2;
 
