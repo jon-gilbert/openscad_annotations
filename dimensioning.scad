@@ -9,11 +9,8 @@
 //   include <openscad_annotations/dimensioning.scad>
 //
 
-include <object_common_functions.scad>
 include <openscad_annotations/common.scad>
 include <openscad_annotations/bosl2_geometry.scad>
-include <attachable_text3d.scad>
-include <logging.scad>
 
 $_annotate_dimensions = [];
 
