@@ -82,6 +82,7 @@ $_anno_obj_measure = [[],[]];
 // Section: Annotate Modules
 //
 // Module: label()
+// Synopsis: Apply a label annotation to a hierarchy of children modules
 // Usage:
 //   label(name) [CHILDREN];
 // Description:
@@ -135,6 +136,7 @@ module label(name) {
 }
 
 // Module: desc()
+// Synopsis: Apply a description annotation to a hierarchy of children modules
 // Usage:
 //   desc(name) [CHILDREN];
 // Description:
@@ -183,6 +185,7 @@ module desc(name) {
 }
 
 // Module: partno()
+// Synopsis: Apply a part-number annotation to a hierarchy of children modules
 // Usage:
 //   partno(val) [CHILDREN];
 // Description:
@@ -469,6 +472,7 @@ function _partno_attach_partno_or_idx(partno, idx, start_new=false) =
 
 
 // Module: spec()
+// Synopsis: Apply a specification annotation to a hierarchy of children modules
 // Usage:
 //   spec(list) [CHILDREN];
 // Description:
@@ -506,6 +510,7 @@ module spec(list) {
 
 
 // Module: obj()
+// Synopsis: Apply an Object annotation to a hierarchy of children modules
 // Usage:
 //   obj(object) [CHILDREN];
 // Description:
@@ -536,6 +541,7 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 
 
 // Module: annotate()
+// Synopsis: Annotate a shape or model within scene
 // Usage:
 //   [ATTACHABLE] annotate();
 //   [ATTACHABLE] annotate(<desc>, <show=["label", "desc"]>, <anchor=RIGHT>, <label=undef>, <partno=undef>, <spec=undef>, <obj=undef>, <leader_len=30>, <color=undef>, <alpha=undef>);
@@ -622,19 +628,19 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //     cuboid(10)
 //       annotate(show=["partno"]);
 //
-// Example: As the parent orientation changes, so does the positioning of the parent. `annotate()` will reposition and reorient its flyout text to remain consitently oriented towards `FWD`:
-//   xdistribute(spacing=60) {
-//      ydistribute(spacing=60) {
-//         label("A") cyl(d=30, h=30, orient=UP)   annotate("bcdef");
-//         label("A") cyl(d=30, h=30, orient=DOWN) annotate("bcdef");
-//         label("A") cyl(d=30, h=30, orient=LEFT) annotate("bcdef");
-//      }
-//      ydistribute(spacing=40) {
-//         label("A") cyl(d=30, h=30, orient=RIGHT) annotate("bcdef");
-//         label("A") cyl(d=30, h=30, orient=FWD)   annotate("bcdef");
-//         label("A") cyl(d=30, h=30, orient=BACK)  annotate("bcdef");    
-//      }
-//   }
+/// Example: As the parent orientation changes, so does the positioning of the parent. `annotate()` will reposition and reorient its flyout text to remain consitently oriented towards `FWD`:
+///   xdistribute(spacing=60) {
+///      ydistribute(spacing=60) {
+///         label("A") cyl(d=30, h=30, orient=UP)   annotate("bcdef");
+///         label("A") cyl(d=30, h=30, orient=DOWN) annotate("bcdef");
+///         label("A") cyl(d=30, h=30, orient=LEFT) annotate("bcdef");
+///      }
+///      ydistribute(spacing=40) {
+///         label("A") cyl(d=30, h=30, orient=RIGHT) annotate("bcdef");
+///         label("A") cyl(d=30, h=30, orient=FWD)   annotate("bcdef");
+///         label("A") cyl(d=30, h=30, orient=BACK)  annotate("bcdef");    
+///      }
+///   }
 //
 // Todo:
 //    gotta document behavior on orientation vs rotation with flyouts.
@@ -727,6 +733,7 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
 
 
 // Function: anno_ok_to_annotate()
+// Synopsis: Determine if annotation should be done
 // Usage:
 //   bool = anno_ok_to_annotate();
 //
@@ -772,6 +779,7 @@ function anno_ok_to_annotate() =
 
 /// ----------------------------------------------------------------------------------
 /// Function: anno_assemble_partno()
+/// Synopsis: Assemble a complete partno string
 /// Usage:
 ///   anno_obj = anno_assemble_partno(anno);
 ///
@@ -812,6 +820,7 @@ function anno_partno_sequence(anno) =
 
 
 /// Function: anno_active_block_headers()
+/// Synopsis: Return a list of annotation blocks that have values
 /// Usage:
 ///   list = anno_active_block_headers(anno);
 ///
@@ -836,6 +845,7 @@ function anno_active_block_headers(anno) =
         
 
 /// Function: anno_size_for_attr()
+/// Synopsis: Return a font-size based on an annotation attribute name
 /// Usage:
 ///   size = anno_size_for_attr(attr);
 /// 
@@ -854,6 +864,7 @@ function anno_size_for_attr(attr) = (attr == "label") ? 7 : (attr == "partno") ?
 
 
 /// Function: anno_obj_to_block()
+/// Synopsis: Convert an Annotation object to a block of text
 /// Usage:
 ///   block = anno_obj_to_block(obj);
 ///
@@ -882,6 +893,7 @@ function anno_obj_to_block(obj) = anno_list_to_block([
 
 
 /// Function: anno_list_to_block()
+/// Synopsis: Convert an list to a block of text
 /// Usage:
 ///   block = anno_list_to_block(list);
 ///
@@ -909,6 +921,7 @@ function anno_list_to_block(list) = [
 
 
 /// Function: partno2translate()
+/// Synopsis: Transform an annotation part-number to a 3D point for positioning
 /// Usage:
 ///   xyz_offset = partno2translate();
 ///   xyz_offset = partno2translate(<d=30>);
@@ -961,6 +974,7 @@ function rec_mat(vectors, distance) =
 
 
 /// Function: bin2vec()
+/// Synopsis: Translate a binary value to a vector
 /// Usage:
 ///   v = bin2vec(b);
 /// Description:
