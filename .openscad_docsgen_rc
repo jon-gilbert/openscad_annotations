@@ -1,4 +1,4 @@
-DocsDirectory: docs/
+DocsDirectory: openscad_annotations.wiki/
 TargetProfile: githubwiki
 ProjectName: openscad_annotations
 IgnoreFiles:
