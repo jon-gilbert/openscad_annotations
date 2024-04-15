@@ -1,4 +1,4 @@
-include <507common/base.scad>
+include <openscad_annotations/bosl2_geometry.scad>
 
 module test_geom() {
     pg = ["prismoid", [15, 15, 15], [15, 15], [0, 0], [0, 0, 1], [0, 0, 0], [0, 0, 0], []];

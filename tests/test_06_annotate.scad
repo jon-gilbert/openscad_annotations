@@ -1,4 +1,4 @@
-include <507common/base.scad>
+include <openscad_annotations/annotate.scad>
 
 /*
 module test_anno_model_vector_combo() {

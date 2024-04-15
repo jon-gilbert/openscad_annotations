@@ -1,4 +1,4 @@
-include <507common/base.scad> 
+include <openscad_annotations/mechanical.scad> 
 
 module test_mech () {
     m = mech("rotational", direction="ccw", limit=100);
