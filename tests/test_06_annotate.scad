@@ -110,3 +110,27 @@ module test_anno_assemble_partno() {
 test_anno_assemble_partno();
 
 
+module test_bin2vec() {
+    assert(bin2vec([0, 0, 0, 0, 0, 0, 0, 0]) == [0, 0, 0]);
+    assert(bin2vec([0, 0, 0, 0, 1, 0, 0, 1]) == [1, 0, 0]);
+    assert(bin2vec([0, 0, 0, 0, 1, 1, 0, 1]) == [1, 0, -1]);
+}
+test_bin2vec();
+
+
+module test_ascii2bin() {
+    assert( ascii2bin("a") == [0,1,1,0,0,0,0,1] );
+    assert( ascii2bin("ab") == [0,1,1,0,0,0,0,1] );
+}
+test_ascii2bin();
+
+
+module test_str2bin() {
+    assert( str2bin("abcdefg") == [
+        [0,1,1,0,0,0,0,1], [0,1,1,0,0,0,1,0], [0,1,1,0,0,0,1,1], [0,1,1,0,0,1,0,0], [0,1,1,0,0,1,0,1], [0,1,1,0,0,1,1,0], [0,1,1,0,0,1,1,1]
+        ]);
+}
+test_str2bin();
+
+
+
