@@ -1,4 +1,4 @@
 tests export-ignore
 .gitignore export-ignore
 .openscad_docsgen_rc export-ignore
-
+VERSION export-subst
