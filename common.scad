@@ -6,9 +6,9 @@
 ///
 
 include <BOSL2/std.scad>
-include <object_common_functions.scad>
-include <attachable_text3d.scad>
-include <logging.scad>
+include <openscad_objects/objects.scad>
+include <openscad_attachable_text3d/attachable_text3d.scad>
+include <openscad_logging/logging.scad>
 
 LOG_LEVEL = 2;
 
