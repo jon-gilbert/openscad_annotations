@@ -28,9 +28,9 @@ To download this library, follow the instructions provided at https://github.com
 
 ## Other Libraries
 You'll also need 
-[openscad_objects](https://github.com/jon-gilbert/openscad_objects) ([direct library download](https://raw.githubusercontent.com/jon-gilbert/openscad_objects/main/object_common_functions.scad)), 
-[openscad_attachable_text3d](https://github.com/jon-gilbert/openscad_attachable_text3d) ([direct](https://raw.githubusercontent.com/jon-gilbert/openscad_attachable_text3d/main/attachable_text3d.scad)), and
-[openscad_logging](https://github.com/jon-gilbert/openscad_logging) ([direct](https://raw.githubusercontent.com/jon-gilbert/openscad_logging/main/logging.scad)).
+[openscad_objects](https://github.com/jon-gilbert/openscad_objects) ([latest release](https://github.com/jon-gilbert/openscad_objects/releases/latest)), 
+[openscad_attachable_text3d](https://github.com/jon-gilbert/openscad_attachable_text3d) ([latest](https://github.com/jon-gilbert/openscad_attachable_text3d/releases/latest)), and
+[openscad_logging](https://github.com/jon-gilbert/openscad_logging) ([latest](https://github.com/jon-gilbert/openscad_logging/releases/latest)).
 
 ## openscad_annotations
 Download the most recent tagged release and download its compressed tgz or zip file, whichever you're more comfortable with. Uncompress and extract the folder within the release, which should be named something like `openscad_annoatations-0.0`. Rename that folder to `openscad_annotations`, and move that folder to the OpenSCAD library directory for your platform:
