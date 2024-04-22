@@ -1,5 +1,7 @@
 #!/bin/bash
 
+D=`dirname $0`
+
 # default this invocation of run-test.sh to failure 
 stat=1
 
@@ -14,7 +16,7 @@ for v in $@; do
     # From that, exclude lines that are '^include <$' and '^use <$' - developer build 2022.04.10 dumps these and no idea why
     # Then, remove any trailing whitespace characters from the full output with a `sed -z`, so we can accurately get the 
     # character count of a null-output run. 
-    openscad -o - -D"LOG_LEVEL=4" --export-format echo --hardwarnings --check-parameters true --check-parameter-ranges false "$v" 2>&1 \
+    OPENSCADPATH=$OPENSCADPATH:$D/../../ openscad -o - -D"LOG_LEVEL=4" --export-format echo --hardwarnings --check-parameters true --check-parameter-ranges false "$v" 2>&1 \
         | egrep -v "^(include|use) <" \
         | sed -ze 's/\s*$//' > testrun_out.txt
 
