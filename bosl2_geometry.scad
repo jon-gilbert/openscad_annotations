@@ -360,7 +360,7 @@ function min_vnf_z(vnf) = min(_axis_vnf_zs(vnf));
 /// Section: Geom Object Functions
 ///   These functions leverage the OpenSCAD Object library to create an Geometry Object and its attribute accessors.
 ///   See https://github.com/jon-gilbert/openscad_objects/blob/main/docs/HOWTO.md for a quick primer on constructing and
-///   using Objects; and https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md for
+///   using Objects; and https://github.com/jon-gilbert/openscad_objects/wiki for
 ///   details on Object functions.
 ///
 /// Subsection: Object Creation

@@ -1155,7 +1155,7 @@ module infoblock_notok(s=10) {
 /// Section: Annotation Object Functions
 ///   These functions leverage the OpenSCAD Object library to create an Annotation Object and its attribute accessors.
 ///   See https://github.com/jon-gilbert/openscad_objects/blob/main/docs/HOWTO.md for a quick primer on constructing and 
-///   using Objects; and https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md for 
+///   using Objects; and https://github.com/jon-gilbert/openscad_objects/wiki for 
 ///   details on Object functions. 
 /// 
 /// Subsection: Construction
@@ -1165,7 +1165,7 @@ module infoblock_notok(s=10) {
 ///   Given either a variable list of attributes and values, or an existing object from 
 ///   from which to mutate, constructs a new `annotation` object list and return it. 
 ///   .
-///   `Annotation()` returns a list containing an opaque object. See `Object()` in https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md#function-object.
+///   `Annotation()` returns a list containing an opaque object. See `Object()` in https://github.com/jon-gilbert/openscad_objects/wiki.
 /// Usage:
 ///   obj = Annotation();
 ///   obj = Annotation(vlist);

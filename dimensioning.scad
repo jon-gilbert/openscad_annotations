@@ -1167,7 +1167,7 @@ function _dimension_geom_conoid(geom) =
 /// Section: Dimension Object Functions
 ///   These functions leverage the OpenSCAD Object library to create a Dimension Object and its attribute accessors.
 ///   See https://github.com/jon-gilbert/openscad_objects/blob/main/docs/HOWTO.md for a quick primer on constructing and
-///   using Objects; and https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md for
+///   using Objects; and https://github.com/jon-gilbert/openscad_objects/wiki for
 ///   details on Object functions.
 ///
 /// Subsection: Construction
@@ -1177,7 +1177,7 @@ function _dimension_geom_conoid(geom) =
 ///   Given either a variable list of attributes and values, or an existing object from
 ///   from which to mutate, constructs a new `dim` object list and return it.
 ///   .
-///   `Dimension()` returns a list containing an opaque object. See `Object()` in https://github.com/jon-gilbert/openscad_objects/blob/main/docs/object_common_functions.scad.md#function-object.
+///   `Dimension()` returns a list containing an opaque object. See `Object()` in https://github.com/jon-gilbert/openscad_objects/wiki.
 /// Usage:
 ///   obj = Dimension();
 ///   obj = Dimension(vlist);
