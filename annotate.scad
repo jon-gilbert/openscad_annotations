@@ -374,6 +374,27 @@ module partno(partno, start_new=false) {
 //   from the parent to illustrate its placement. In addition, a thin leader line is drawn between the 
 //   parent and child, clarifying placement and relation.
 //
+// Example: `partno()`'s Example 2, above, but with using `partno_attach()`: a hirearchical part-number use, showing inheritance of the part-numbers within a tree:
+//   partno(30)
+//     cuboid(30) {
+//       annotate(show=["partno"]);
+//       partno_attach(TOP, BOTTOM, partno=16)
+//         cuboid(16) {
+//           annotate(show=["partno"]);
+//           partno_attach(TOP, BOTTOM, partno=5)
+//             cuboid(5)
+//                annotate(show=["partno"]);
+//         }
+//     }
+//
+// Example: `partno()`'s Example 6, above, but with `partno_attach()`: using `$idx` as a value doesn't work with `partno_attach()` (because at the time of invocation, `$idx` isn't set correctly), but you *can* use the literal string `"idx"` as a value, and `partno_attach()` will do the right thing. This works in a distributor, and also when specifying multiple attachable anchor points in a single attach call:
+//   partno(1)
+//     cuboid(30)
+//       partno_attach([TOP,BOTTOM,LEFT,RIGHT,FWD,BACK], BOTTOM, partno="idx")
+//         sphere(r=3)
+//           annotate(show=["partno"], anchor=TOP, leader_len=3);
+//
+//
 // Example: a simple `partno_attach()` relation, with `EXPAND_PARTS` set as `false` (which is the default):
 //   EXPAND_PARTS = false;
 //   label("A")
