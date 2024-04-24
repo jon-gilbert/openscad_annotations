@@ -1,9 +1,9 @@
-/// LibFile: common.scad
-///   Common include file across openscad_annotations LibFiles
-///
-/// Includes:
-///   include <openscad_annotations/common.scad>
-///
+// LibFile: common.scad
+//   Common include file across openscad_annotations LibFiles
+//
+// Includes:
+//   include <openscad_annotations/common.scad>
+//
 
 include <BOSL2/std.scad>
 include <openscad_objects/objects.scad>
@@ -12,6 +12,7 @@ include <openscad_logging/logging.scad>
 
 LOG_LEVEL = 2;
 
+// Section: Common Functions and Modules
 
 /// Function: _defined()
 /// Synopsis: Carryover from 507common's `defined()`: test to see if a given variable is defined
