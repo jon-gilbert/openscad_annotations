@@ -24,22 +24,6 @@ include <openscad_annotations/flyout.scad>
 ///   Currently: `false`, so as to indicate not-set.
 MECH_NUMBER = false;
 
-/// Constant: RENDER_ANNOTATIONS
-/// Description: 
-///   Boolean specifying whether annotations should be present during 
-///   rendering (as opposed to during preview). 
-///   Currently: `false`
-/// See Also: anno_ok_to_annotate()
-RENDER_ANNOTATIONS = false;
-
-/// Constant: PREVIEW_ANNOTATIONS
-/// Description: 
-///   Boolean specifying whether annotations should be present during 
-///   previews (as opposed to during a proper render). 
-///   Currently: `true`
-/// See Also: anno_ok_to_annotate()
-PREVIEW_ANNOTATIONS = true;
-
 /// Constant: EXPAND_PARTS
 /// Description: 
 ///   Boolean variable that can instruct models using `partno()` to 
@@ -444,13 +428,13 @@ module partno_attach(from, to, overlap, partno=undef, norot=false, start_new=fal
         /// TODO: I like this a lot better; however, when from and to are both CENTER, 
         ///       it behaves badly. (probably happens when from and to are identical for 
         ///       both parent and child.)
-        ///if (EXPAND_PARTS && anno_ok_to_annotate()) {
+        ///if (EXPAND_PARTS && ok_to_annotate()) {
         ///    pr = [anch[1], move(anch[2] * abs(overlap * 0.1), p=anch[1])];
         ///    part_path = line_extend(pr, tail_ext=abs(overlap * 0.9));
         ///    color("black", alpha=0.3)
         ///        dashed_stroke(part_path, [10, 2, 3, 2, 3, 2], width=0.3, closed=false);
         ///}
-        if (_defined(partno) && EXPAND_PARTS && anno_ok_to_annotate()) {
+        if (_defined(partno) && EXPAND_PARTS && ok_to_annotate()) {
             fromvec = two_d ? BACK : UP;
             $attach_to = BOTTOM;
             translate(anch[1]) 
@@ -700,7 +684,7 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
     // list out the known blocks, but only for the ones we asked for:
     blocks = set_intersection(anno_active_block_headers(anno), show_);
 
-    if (_defined(blocks) && anno_ok_to_annotate()) {
+    if (_defined(blocks) && ok_to_annotate()) {
         // figure out where, how to place this annotation object:
         // `$parent_geom` is set by BOSL2's attachable() module. 
         // `find_anchor()` is provided by BOSL2. 
@@ -751,52 +735,6 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
                                 attachable_text3d_multisize(text_sections);
     }
 }
-
-
-// Function: anno_ok_to_annotate()
-// Synopsis: Determine if annotation should be done
-// Usage:
-//   bool = anno_ok_to_annotate();
-//
-// Description:
-//   Simplification of whether or not to produce model annotations, flyouts, or measurements. 
-//   Examines the setting of `$preview`, `PREVIEW_ANNOTATIONS`, & `RENDER_ANNOTATIONS`,  
-//   and returns either `true` (meaning an annotation should be modeled) or `false` 
-//   (meaning an annotation should not be modeled). 
-//   .
-//   The selection of annotation behavior can be adjusted or overridden by individual SCAD models by 
-//   changing `PREVIEW_ANNOTATIONS` from `true` to `false`, indicating that 
-//   annotations should be not included during preview modes. This behavior is normally set to 
-//   `true`, and annotations are normally modeled and displayed in preview mode.
-//   .
-//   This behavior can also be adjusted with the `RENDER_ANNOTATIONS` boolean, 
-//   where setting it to `true` will cause annotations to be fully rendered and 
-//   exported as STL or OBJ, or what-have-you; this is not the normal behavior.
-// 
-// Example: very basic usage of "should this block of modeling be executed?"
-//   if (anno_ok_to_annotate()) {
-//     // this block will be modeled, if 
-//     // if anno_ok_to_annotate() returned true
-//   }
-//
-// Continues:
-//   The `PREVIEW_ANNOTATIONS` and `RENDER_ANNOTATIONS` variables exist 
-//   to change this behavior from the command-line. You can set these to 
-//   `true` or `false`, depending on what you need, and OpenSCAD will 
-//   use them in conjuction with `anno_ok_to_annotate()` when 
-//   deciding if the block under the `if` should be produced. 
-//
-// Example: 
-//   $ openscad -D"RENDER_ANNOTATIONS=true"
-//   // rendering these models will include annotations
-//
-function anno_ok_to_annotate() = 
-    let(
-        show_preview = ($preview && PREVIEW_ANNOTATIONS), 
-        show_render =  (!$preview && RENDER_ANNOTATIONS)
-    )
-    show_preview || show_render;
-
 
 /// ----------------------------------------------------------------------------------
 /// Function: anno_assemble_partno()
@@ -1149,7 +1087,7 @@ module infoblock(v=10, color="red", symbol=undef, font="Liberation Sans") {
 
 
 module infoblock_info(s=10) {
-    if (anno_ok_to_annotate())
+    if (ok_to_annotate())
         attachable(CENTER, 0, UP, size=[s,s,s]) {
             infoblock(s, color="yellow", font="Webdings", symbol="i");
             children();
@@ -1157,7 +1095,7 @@ module infoblock_info(s=10) {
 }
 
 module infoblock_ok(s=10) {
-    if (anno_ok_to_annotate())
+    if (ok_to_annotate())
         attachable(CENTER, 0, UP, size=[s,s,s]) {
             infoblock(s, color="green", font="Webdings", symbol="a");
             children();
@@ -1165,7 +1103,7 @@ module infoblock_ok(s=10) {
 }
 
 module infoblock_notok(s=10) {
-    if (anno_ok_to_annotate())
+    if (ok_to_annotate())
         attachable(CENTER, 0, UP, size=[s,s,s]) {
             infoblock(s, color="red", font="Webdings", symbol="x");
             children();

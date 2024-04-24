@@ -9,7 +9,6 @@
 //
 
 include <openscad_annotations/common.scad>
-include <openscad_annotations/annotate.scad>
 include <openscad_annotations/bosl2_geometry.scad>
 
 /// Section: Scope-level Constants
@@ -399,7 +398,7 @@ module mechanical(m=undef, visual_offset=undef, visual_color=undef, visual_alpha
         );
     m_ = Mech(v_, mutate=m__);
 
-    if (anno_ok_to_annotate()) {
+    if (ok_to_annotate()) {
         log_fatal_unless(in_list(mech_type(m_), MECH_TYPES),
             ["unknown mechanical type", mech_type(m_), 
                 "; Known types are:", MECH_TYPES

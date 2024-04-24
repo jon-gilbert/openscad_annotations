@@ -307,57 +307,59 @@ module dimension(dim_or_obj, context=undef, tolerance=undef, units=undef, isdiam
 //
 //
 module measure(dimensions=[], bosl2_dims=true) {
-    // assemble dimensions from all possible sources into a single list.
-    // ignore list elements that are undefined, or are not objects.
-    // BRAK: do we need to ref parent_geom here at all?
-    geometry_dimensions = (bosl2_dims && _defined($parent_geom)) ? convert_parent_geom_to_dimensions($parent_geom) : [];
-    ad_ = concat(geometry_dimensions, dimensions, $_annotate_dimensions);
-    dimensions_and_flyouts = [ for(t=ad_) if (_defined(t) && obj_is_obj(t)) t ];
+    if (ok_to_annotate()) {
+        // assemble dimensions from all possible sources into a single list.
+        // ignore list elements that are undefined, or are not objects.
+        // BRAK: do we need to ref parent_geom here at all?
+        geometry_dimensions = (bosl2_dims && _defined($parent_geom)) ? convert_parent_geom_to_dimensions($parent_geom) : [];
+        ad_ = concat(geometry_dimensions, dimensions, $_annotate_dimensions);
+        dimensions_and_flyouts = [ for(t=ad_) if (_defined(t) && obj_is_obj(t)) t ];
 
-    // split that list out into dimensions that are measurements, and dimensions that are flyouts:
-    dims = obj_select_by_attr_value(dimensions_and_flyouts, "isflyout", false);
-    flyouts = obj_select_by_attr_value(dimensions_and_flyouts, "isflyout", true);
+        // split that list out into dimensions that are measurements, and dimensions that are flyouts:
+        dims = obj_select_by_attr_value(dimensions_and_flyouts, "isflyout", false);
+        flyouts = obj_select_by_attr_value(dimensions_and_flyouts, "isflyout", true);
 
-    // re-group the dimensions, organized by their `aso` attribute:
-    regrouped_dims = obj_regroup_list_by_attr(dims, "aso");
-    
-    // process each group of dims: the dimensions are grouped 
-    // by their `aso` attribute; each group is sorted 
-    // ascendingly by the `dim` attribute, and each line extension is increased 
-    // according to the order in which the dimension is sorted.
-    for (group=regrouped_dims) {
-        sorted_dimensions = obj_sort_by_attribute(group, "dim");
-        for (i=idx(sorted_dimensions)) {
-            dimension = dim_ext(
-                sorted_dimensions[i],
-                nv=sum([ 
-                    i * (dim_font_size(sorted_dimensions[i]) * 4), 
-                    dim_font_size(sorted_dimensions[i]) * 2 
-                    ]) 
-                );
-            if (_defined(dim_pos(dimension))) {
-                move(dim_pos(dimension))
-                    dimension_line_extended(dimension, anchor=BACK);
-            } else {
-                position(dim_aso(dimension)[0])
-                    dimension_line_extended(dimension, anchor=BACK);
+        // re-group the dimensions, organized by their `aso` attribute:
+        regrouped_dims = obj_regroup_list_by_attr(dims, "aso");
+        
+        // process each group of dims: the dimensions are grouped 
+        // by their `aso` attribute; each group is sorted 
+        // ascendingly by the `dim` attribute, and each line extension is increased 
+        // according to the order in which the dimension is sorted.
+        for (group=regrouped_dims) {
+            sorted_dimensions = obj_sort_by_attribute(group, "dim");
+            for (i=idx(sorted_dimensions)) {
+                dimension = dim_ext(
+                    sorted_dimensions[i],
+                    nv=sum([ 
+                        i * (dim_font_size(sorted_dimensions[i]) * 4), 
+                        dim_font_size(sorted_dimensions[i]) * 2 
+                        ]) 
+                    );
+                if (_defined(dim_pos(dimension))) {
+                    move(dim_pos(dimension))
+                        dimension_line_extended(dimension, anchor=BACK);
+                } else {
+                    position(dim_aso(dimension)[0])
+                        dimension_line_extended(dimension, anchor=BACK);
+                }
             }
         }
-    }
 
-    // process all the Dimension flyout objects: model, then
-    // position each flyout received:
-    for (flyout=flyouts) {
-        if (_defined(dim_pos(flyout))) {
-            move(dim_pos(flyout))
-                dimension_flyout(flyout);
-        } else {
-            position(dim_aso(flyout)[0])
-                dimension_flyout(flyout);
+        // process all the Dimension flyout objects: model, then
+        // position each flyout received:
+        for (flyout=flyouts) {
+            if (_defined(dim_pos(flyout))) {
+                move(dim_pos(flyout))
+                    dimension_flyout(flyout);
+            } else {
+                position(dim_aso(flyout)[0])
+                    dimension_flyout(flyout);
+            }
         }
-    }
 
-    children();
+        children();
+    }
 }
 
 
