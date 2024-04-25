@@ -63,7 +63,13 @@ $_anno_obj_measure = [[],[]];
 
 
 
-// Section: Annotate Modules
+// Section: Modules that Apply Annotations to Models
+//   Labeling and describing shapes and models with Annotations happens in two steps. The first step applies the annotation, 
+//   be it a simple label ("tab-A"), a descriptive block of text ("fits into slot B"), a part-number ("A-001-X"), or 
+//   whatever; the second step produces the in-scene textual elements applied to the shape, the actual act of annotation.
+//   .
+//   The modules in this section do the first step: they apply the notes and annotation to child shapes and models, to be 
+//   rendered into an annotation in the next step.
 //
 // Module: label()
 // Synopsis: Apply a label annotation to a hierarchy of children modules
@@ -545,6 +551,15 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 }
 
 
+// Section: Annotating Modules
+//   Labeling and describing shapes and models with Annotations happens in two steps. The first step applies the annotation; 
+//   the second step produces the in-scene textual elements applied to the shape, the actual act of annotation, where the 
+//   various labels and tags are assembled into a flyout that provides context to the viewer as to what exactly they're 
+//   looking at.
+//   .
+//   The modules in this section do the second step: they pull together the locally-scoped variables, create a text block with 
+//   all the relevant and selected annotations, and drop it in-scene with a flyout attached to the shape or model. 
+//
 // Module: annotate()
 // Synopsis: Annotate a shape or model within scene
 // Usage:
