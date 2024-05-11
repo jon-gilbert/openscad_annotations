@@ -4,8 +4,15 @@
 /// Includes:
 ///   include <openscad_annotations/common.scad>
 ///
+/// NOTE - the BOSL2 external library is a 
+/// requirement for openscad_annotations; HOWEVER, it is 
+/// not directly included here. Instead, openscad_annotations 
+/// relies on another library's inclusion of BOSL2 to cut 
+/// down on load-time. This cut down is just a little more 
+/// than one second of wall time.
+/// This creates a transitive dependency on BOSL2, through 
+/// openscad_objects or openscad_attachable_text3d. 
 
-include <BOSL2/std.scad>
 include <openscad_objects/objects.scad>
 include <openscad_attachable_text3d/attachable_text3d.scad>
 include <openscad_logging/logging.scad>
