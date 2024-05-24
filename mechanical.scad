@@ -554,8 +554,16 @@ module mech_lateral(m, anchor=CENTER, spin=0, orient=UP) {
     axis = _first([ mech_axis(m), geom_axis(geom) ]);
     boundary = parent_geom_bounding_box(geom);
 
-    default_len = max(boundary);
-    lp_length = log_debug_assign( min([mech_limit(m, default=default_len), mech_visual_limit(m, default=default_len)]), "lp_length");
+    lp_length = log_debug_assign(
+        max([
+            11,
+            first([
+                mech_limit(m),
+                mech_visual_limit(m),
+                max(boundary)
+                ]),
+            ]),
+        "lp_length");
     lateral_path = [[-1 * (lp_length / 2), 0], [lp_length / 2, 0]];
 
     attachable(anchor, spin, orient, size=[mvt, mvt, lp_length]) {
