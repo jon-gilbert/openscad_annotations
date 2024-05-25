@@ -128,18 +128,18 @@ $_mech = undef;
 // Todo: 
 //   consider implementing progressively adaptable mech() calls (eg, `mech(limit=1) mech("rot") shape(r=10) mech("osc") shape2(r=20)`)
 //
-module mech(type, direction=undef, limit=undef, geom=undef, axis=undef, pivot=undef, pivot_radius=undef, visual_offset=undef, visual_color=undef, visual_alpha=undef, visual_placements=[], visual_thickness=undef, visual_spin=undef, visual_limit=undef, clear=false) {
+module mech(type, direction=undef, limit=undef, geom=undef, axis=undef, pivot=undef, pivot_radius=undef, visual_offset=undef, visual_color=undef, visual_alpha=undef, visual_placements=[], visual_thickness=undef, visual_spin=undef, visual_limit=undef, visual_dashed=false, clear=false) {
     $_mech = mech(type,
         direction, limit, geom, axis,
         pivot, pivot_radius,
         visual_offset, visual_color,
         visual_alpha, visual_placements,
-        visual_thickness, visual_spin, visual_limit,
+        visual_thickness, visual_spin, visual_limit, visual_dashed,
         clear);
     children();
 }
 
-function mech(type, direction=undef, limit=undef, geom=undef, axis=undef, pivot=undef, pivot_radius=undef, visual_offset=undef, visual_color=undef, visual_alpha=undef, visual_placements=[], visual_thickness=undef, visual_spin=undef, visual_limit=undef, clear=false) =
+function mech(type, direction=undef, limit=undef, geom=undef, axis=undef, pivot=undef, pivot_radius=undef, visual_offset=undef, visual_color=undef, visual_alpha=undef, visual_placements=[], visual_thickness=undef, visual_spin=undef, visual_limit=undef, visual_dashed=false, clear=false) =
     // I keep going back and forth here about whether we should have a shorthand 
     // for types (eg, "rot", "osc") and I'm writing here to remind myself later 
     // that <<No, we should not>>.
@@ -201,6 +201,7 @@ function mech(type, direction=undef, limit=undef, geom=undef, axis=undef, pivot=
             "visual_thickness", visual_thickness_,
             "visual_spin", visual_spin,
             "visual_limit", visual_limit,
+            "visual_dashed", visual_dashed,
             ]);
 
 
@@ -500,15 +501,26 @@ module mech_rotational(m, anchor=CENTER, spin=0, orient=UP) {
     rotational_path = arc(32, angle=degrees, r=radius);
     axial_path = [down(boundary.z * 0.75, p=CENTER), up(boundary.z * 0.75, p=CENTER)];
 
+    dashed = mech_visual_dashed(m);
+    mvt = mech_visual_thickness(m);
+
     attachable(anchor, spin, orient, r=radius, h=height) {
         union() {
-            stroke(
-                rotational_path,
-                width=mech_visual_thickness(m),
-                endcap1=(in_list("cw", dir)) ? "arrow2" : undef,
-                endcap2=(in_list("ccw", dir)) ? "arrow2" : undef,
-                closed=false
-                );
+            if (dashed) {
+                stroke_segs = path_to_trimmed_segments(rotational_path, closed=false);
+                if (in_list("cw", dir))
+                    stroke(stroke_segs[0], width=mvt, closed=false, endcap1="arrow2");
+                dashed_stroke(stroke_segs[1], [3,3], width=mvt, closed=false);
+                if (in_list("ccw", dir))
+                    stroke(stroke_segs[2], width=mvt, closed=false, endcap2="arrow2");
+            } else {
+                stroke(
+                    rotational_path,
+                    width=mvt,
+                    endcap1=(in_list("cw", dir)) ? "arrow2" : undef,
+                    endcap2=(in_list("ccw", dir)) ? "arrow2" : undef,
+                    closed=false);
+            }
             dashed_stroke(
                 axial_path,
                 [8, 2, 3, 2, 3, 2],
@@ -557,7 +569,7 @@ module mech_lateral(m, anchor=CENTER, spin=0, orient=UP) {
     lp_length = log_debug_assign(
         max([
             11,
-            first([
+            _first([
                 mech_limit(m),
                 mech_visual_limit(m),
                 max(boundary)
@@ -566,15 +578,24 @@ module mech_lateral(m, anchor=CENTER, spin=0, orient=UP) {
         "lp_length");
     lateral_path = [[-1 * (lp_length / 2), 0], [lp_length / 2, 0]];
 
+    dashed = mech_visual_dashed(m);
+
     attachable(anchor, spin, orient, size=[mvt, mvt, lp_length]) {
-        rot(from=RIGHT, to=dir[0]) // the stroke is a 2d path: rortate it from 'right' to whatever dir[0] is
-            stroke(
-                lateral_path,
-                width=mvt,
-                endcap1=(_defined(dir[1])) ? "arrow2" : undef,
-                endcap2="arrow2",  // this is the dir[0] point, and it should always have an arrow cap
-                closed=false
-            );
+        rot(from=RIGHT, to=dir[0]) // the stroke is a 2d path: rotate it from 'right' to whatever dir[0] is
+            if (dashed) {
+                stroke_segs = path_to_trimmed_segments(lateral_path, closed=false);
+                if (_defined(dir[1]))
+                    stroke(stroke_segs[0], width=mvt, closed=false, endcap1="arrow2");
+                dashed_stroke(stroke_segs[1], [3,3], width=mvt, closed=false);
+                stroke(stroke_segs[2], width=mvt, closed=false, endcap2="arrow2");
+            } else {
+                stroke(
+                    (dashed) ? dashed_stroke(lateral_path, [3,3], closed=false) : lateral_path,
+                    width=mvt,
+                    endcap1=(_defined(dir[1])) ? "arrow2" : undef,
+                    endcap2="arrow2",  // this is the dir[0] point, and it should always have an arrow cap
+                    closed=false);
+            }
         children();
     }
 }
@@ -805,6 +826,20 @@ module mech_reciprocal(m, anchor=CENTER, spin=0, orient=UP) {
 /// 
 
 
+function path_to_trimmed_segments(p, min_trim=11, closed=false) =
+    let(
+        rs_path = resample_path(p, spacing=1, closed=closed),
+        rsl = len(rs_path) - 1,
+        segs = (path_length(p) < min_trim)
+            ? [ p, p, p]
+            : [ [rs_path[0], rs_path[min_trim]],
+                [ for (i=[3:rsl-3]) rs_path[i] ],
+                [rs_path[rsl-min_trim], rs_path[rsl]]
+                ]
+    )
+    segs;
+
+
 /// Section: Mech Object 
 ///   The Mech Object uses openscad_objects to manage mechanical attributes for shapes and models. A singular Mech object may be applied to 
 ///   a model; that object will be inherited by all that model's children, until the Mech object is replaced or cleared. 
@@ -838,6 +873,7 @@ MECH_TYPES = ["rotational", "oscillatory", "lateral", "reciprocal"];
 ///   visual_thickness = i = For visual annotations, sets the thickness of the annotating arrow shape. Default: `0.5`
 ///   visual_spin = i = For visual annotations, rotates the produced model on the z-axis by this many degrees before placement. Default: `0`
 ///   visual_limit = i = For visual annotations, restricts the size of the annotation as though `limit` had been applied. Default: `0`
+///   visual_dashed = b = If set to `true`, will produce a dashed annotation line, instead of a solid. Default: `false`
 /// 
 Mech_attributes = [
     "type=s",       // one of: rotational, oscillating, recipricol, or linear
@@ -854,6 +890,7 @@ Mech_attributes = [
     "visual_thickness=i=2",
     "visual_spin=i",
     "visual_limit=i",
+    ["visual_dashed", "b", false],
     ];
 
 /// Subsection: Object Creation
@@ -913,5 +950,6 @@ function mech_visual_placements(mech, default=undef, nv=undef) = obj_accessor(me
 function mech_visual_thickness(mech, default=undef, nv=undef) = obj_accessor(mech, "visual_thickness", default=default, nv=nv);
 function mech_visual_spin(mech, default=undef, nv=undef) = obj_accessor(mech, "visual_spin", default=default, nv=nv);
 function mech_visual_limit(mech, default=undef, nv=undef) = obj_accessor(mech, "visual_limit", default=default, nv=nv);
+function mech_visual_dashed(mech, default=undef, nv=undef) = obj_accessor(mech, "visual_dashed", default=default, nv=nv);
 
 
