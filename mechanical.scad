@@ -82,7 +82,8 @@ $_mech = undef;
 //   visual_placements = When annotating in a visual scene, position annotations at this list of attachment points. Default: `[RIGHT]` *(as in, a list with a single element of `RIGHT` within it)*
 //   visual_thickness = When annotating in a visual scene, set the annotations to this thickness. Default: `2`
 //   visual_spin = When annotating in a visual scene, rotate the annotation around `pivot_radius` by this number of degrees. Default: `undef` (for no rotatation)
-//   visual_limit = When annotating in a visual scene, apply this limit value without changing the `limit` attribute. Default: undef
+//   visual_limit = When annotating in a visual scene, apply this limit value without changing the `limit` attribute. Default: `undef`
+//   visual_dashed = When annotating in a visual scene, if set to `true`, the annotation will be shown as a dashed line. Default: `false`
 //   clear = If set to `true`, will clear the current Mech assignment in the hirearchy, and ignore all other arguments in the call to `mech()`. Default: `false`
 //
 // Continues:
@@ -279,6 +280,7 @@ function _mech_dir_from_arg_lateral(dir, type="lateral") =
 //   visual_thickness = If specified, this value will be used in place of the Mech object's `visual_thickness` attribute. Default: `undef`
 //   visual_spin = If specified, this value will be used in place of the Mech object's `visual_spin` attribute. Default: `undef`
 //   visual_limit = If specified, this value will be used in place of the Mech object's `visual_limit` attribute. Default: `undef`
+//   visual_dashed = If set to `true`, the mechanical annotation will be a dashed line instead of a solid line. Default: `false`
 //
 // Continues:
 //   It is an error to call `mechanical()` without first instantiating a Mech object (as with `mech()`). 
@@ -289,7 +291,12 @@ function _mech_dir_from_arg_lateral(dir, type="lateral") =
 //   mech("lateral", direction=UP)
 //       cuboid([10, 10, 50])
 //           mechanical();
-//   
+//
+// Example: Same basic lateral movement annotation, but the annotation is dashed:
+//   mech("lateral", direction=UP)
+//       cuboid([10, 10, 50])
+//           mechanical(visual_dashed=true);
+// 
 // Example: Basic lateral movement annotation: describes a bar that is meant to move down:
 //   mech("lateral", direction=DOWN)
 //       cuboid([10, 10, 50])
@@ -381,42 +388,41 @@ function _mech_dir_from_arg_lateral(dir, type="lateral") =
 // Todo:
 //   I hate visual_spin's use to get oscillatory annotations placed where I want them, and would much rather use visual_placements[0] and automatically rotate the correct number of degrees round the pivot. 
 //
-module mechanical(m=undef, visual_offset=undef, visual_color=undef, visual_alpha=undef, visual_placements=undef, visual_thickness=undef, visual_spin=undef, visual_limit=undef) {
-    m__ = _first([m, $_mech]);
-    log_fatal_unless(obj_is_obj(m__) && obj_toc_get_type(m__) == "Mech",
+module mechanical(m=undef, visual_offset=undef, visual_color=undef, visual_alpha=undef, visual_placements=undef, visual_thickness=undef, visual_spin=undef, visual_limit=undef, visual_dashed=true) {
+    __m = _first([m, $_mech]);
+    log_fatal_unless(obj_is_obj(__m) && obj_toc_get_type(__m) == "Mech",
         "needs a $_mech variable defined to a Mech object");
-    v_ = list_remove_values([
-        (_defined(visual_offset)) ? ["visual_offset", visual_offset] : undef,
-        (_defined(visual_color)) ? ["visual_color", visual_color] : undef,
-        (_defined(visual_alpha)) ? ["visual_alpha", visual_alpha] : undef,
-        (_defined(visual_placements)) ? ["visual_placements", visual_placements] : undef,
-        (_defined(visual_thickness)) ? ["visual_thickness", visual_thickness] : undef,
-        (_defined(visual_spin)) ? ["visual_spin", visual_spin] : undef,
-        (_defined(visual_limit)) ? ["visual_limit", visual_limit] : undef,
-        ], 
-        [undef], 
-        all=true
-        );
-    m_ = Mech(v_, mutate=m__);
+    _m = Mech(
+        list_remove_values([
+            (_defined(visual_offset)) ? ["visual_offset", visual_offset] : undef,
+            (_defined(visual_color)) ? ["visual_color", visual_color] : undef,
+            (_defined(visual_alpha)) ? ["visual_alpha", visual_alpha] : undef,
+            (_defined(visual_placements)) ? ["visual_placements", visual_placements] : undef,
+            (_defined(visual_thickness)) ? ["visual_thickness", visual_thickness] : undef,
+            (_defined(visual_spin)) ? ["visual_spin", visual_spin] : undef,
+            (_defined(visual_limit)) ? ["visual_limit", visual_limit] : undef,
+            (_defined(visual_dashed)) ? ["visual_dashed", visual_dashed] : undef,
+            ], 
+            [undef], 
+            all=true),
+        mutate=__m);
 
     if (ok_to_annotate()) {
-        log_fatal_unless(in_list(mech_type(m_), MECH_TYPES),
-            ["unknown mechanical type", mech_type(m_), 
+        log_fatal_unless(in_list(mech_type(_m), MECH_TYPES),
+            ["unknown mechanical type", mech_type(_m), 
                 "; Known types are:", MECH_TYPES
             ]);
 
-        g = (_defined(mech_geom(m_)))
-            ? mech_geom(m_)
+        g = (_defined(mech_geom(_m)))
+            ? mech_geom(_m)
             : Geom();
 
-        g_derived_pivot = (is_list(mech_pivot(m_)))
-            ? mech_pivot(m_) 
-            : _find_anchor(mech_pivot(m_), ParentGeom(g))[1];
+        g_derived_pivot = (is_list(mech_pivot(_m)))
+            ? mech_pivot(_m) 
+            : _find_anchor(mech_pivot(_m), ParentGeom(g))[1];
 
         m = (_defined(g))
-            ? Mech(["geom", g,
-                "pivot", g_derived_pivot
-                ], mutate=m_)
+            ? Mech(["geom", g, "pivot", g_derived_pivot], mutate=_m)
             : log_fatal("No 'geom' attribute set and no '$parent_geom' available.");
 
         vcolor = mech_visual_color(m);
@@ -826,6 +832,18 @@ module mech_reciprocal(m, anchor=CENTER, spin=0, orient=UP) {
 /// 
 
 
+/// Function: path_to_trimmed_segments()
+/// Synopsis: rebuilt a path into three parts
+/// Usage:
+///   segments = path_to_trimmed_segments(path);
+///   segments = path_to_trimmed_segments(path, <min_trim=11>, <closed=false>);
+/// Description:
+///   Given a path `path`, return the same path in three segments as a list `segments`. 
+///   The path is resampled to have one point per `1` spacing, and the head 
+///   and tail portions of the path are returned as the first and third elements 
+///   of `segments`. The second segment is the resampled path from element `3` to `-3`. 
+///   If the path length is longer than `max_trim`, the entire path will be returned
+///   as each of the three segments.
 function path_to_trimmed_segments(p, min_trim=11, closed=false) =
     let(
         rs_path = resample_path(p, spacing=1, closed=closed),
