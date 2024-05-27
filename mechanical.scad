@@ -388,7 +388,7 @@ function _mech_dir_from_arg_lateral(dir, type="lateral") =
 // Todo:
 //   I hate visual_spin's use to get oscillatory annotations placed where I want them, and would much rather use visual_placements[0] and automatically rotate the correct number of degrees round the pivot. 
 //
-module mechanical(m=undef, visual_offset=undef, visual_color=undef, visual_alpha=undef, visual_placements=undef, visual_thickness=undef, visual_spin=undef, visual_limit=undef, visual_dashed=true) {
+module mechanical(m=undef, visual_offset=undef, visual_color=undef, visual_alpha=undef, visual_placements=undef, visual_thickness=undef, visual_spin=undef, visual_limit=undef, visual_dashed=false) {
     __m = _first([m, $_mech]);
     log_fatal_unless(obj_is_obj(__m) && obj_toc_get_type(__m) == "Mech",
         "needs a $_mech variable defined to a Mech object");
