@@ -32,6 +32,11 @@ MECH_NUMBER = false;
 ///   Currently: `false`
 /// See Also: partno()
 EXPAND_PARTS = false;
+$_EXPAND_PARTS = false;
+
+HIGHLIGHT_PART = undef;
+
+LIST_PARTS = false;
 
 
 /// Section: Scope-level Constants
@@ -121,6 +126,7 @@ $_anno_obj_measure = [[],[]];
 //     }
 //
 module label(name) {
+    req_children($children);
     $_anno_labelname = name;
     children();
 }
@@ -170,6 +176,7 @@ module label(name) {
 //       annotate("Not such a great cube, actually", show=["desc"]);
 //
 module desc(name) {
+    req_children($children);
     $_anno_desc = name;
     children();
 }
@@ -311,16 +318,25 @@ module desc(name) {
 //        }
 //
 module partno(partno, start_new=false) {
+    req_children($children);
     $_anno_partno = (start_new)
         ? [ partno ]
         : (_defined($_anno_partno)) 
             ? concat($_anno_partno, partno) 
             : [ partno ];
 
-    trans_vector = (EXPAND_PARTS) ? partno2translate() : [0,0,0];
+    anno_partno_str = anno_partno_str();
 
-    move(trans_vector)
-        children();
+    if (LIST_PARTS)
+        echo(str("PART:", anno_partno_str));
+
+    trans_vector = (EXPAND_PARTS || $_EXPAND_PARTS) ? partno2translate() : [0,0,0];
+
+    $tags_shown = (_defined(HIGHLIGHT_PART)) ? [HIGHLIGHT_PART] : "ALL";
+
+    tag(anno_partno_str) //echo("curr tag:", $tag) echo("tags_shown:", $tags_shown)
+        move(trans_vector)
+            children();
 }
 
 
@@ -413,10 +429,14 @@ module partno_attach(from, to, overlap, partno=undef, norot=false, start_new=fal
 
     req_children($children);
     assert($parent_geom != undef, "No object to attach to!");
-    overlap = ((overlap!=undef)? overlap : $overlap) + ((EXPAND_PARTS && _defined(partno)) ? partno_t_offset : 0);
+
+    $tags_shown = (_defined(HIGHLIGHT_PART)) ? [HIGHLIGHT_PART] : "ALL";
+    overlap = ((overlap!=undef)? overlap : $overlap) + (((EXPAND_PARTS || $_EXPAND_PARTS) && _defined(partno)) ? partno_t_offset : 0);
     anchors = (is_vector(from)||is_string(from))? [from] : from;
     for ($idx = idx(anchors)) {
         $_anno_partno = _partno_attach_partno_or_idx(partno, $idx, start_new);
+        if (LIST_PARTS)
+            echo(str("PART:", anno_partno_str()));
         anchr = anchors[$idx];
         anch = _find_anchor(anchr, $parent_geom);
         two_d = _attach_geom_2d($parent_geom);
@@ -424,11 +444,12 @@ module partno_attach(from, to, overlap, partno=undef, norot=false, start_new=fal
         $attach_anchor = anch;
         $attach_norot = norot;
         olap = two_d? [0,-overlap,0] : [0,0,-overlap];
+        anno_pn = anno_partno_str();
         if (norot || (norm(anch[2]-UP)<1e-9 && anch[3]==0)) {
-            translate(anch[1]) translate(olap) children();
+            translate(anch[1]) translate(olap) tag(anno_pn) children();
         } else {
             fromvec = two_d? BACK : UP;
-            translate(anch[1]) rot(anch[3],from=fromvec,to=anch[2]) translate(olap) children();
+            translate(anch[1]) rot(anch[3],from=fromvec,to=anch[2]) translate(olap) tag(anno_pn) children();
         }
 
         /// TODO: I like this a lot better; however, when from and to are both CENTER, 
@@ -440,7 +461,7 @@ module partno_attach(from, to, overlap, partno=undef, norot=false, start_new=fal
         ///    color("black", alpha=0.3)
         ///        dashed_stroke(part_path, [10, 2, 3, 2, 3, 2], width=0.3, closed=false);
         ///}
-        if (_defined(partno) && EXPAND_PARTS && ok_to_annotate()) {
+        if (_defined(partno) && (EXPAND_PARTS || $_EXPAND_PARTS) && ok_to_annotate()) {
             fromvec = two_d ? BACK : UP;
             $attach_to = BOTTOM;
             translate(anch[1]) 
@@ -515,6 +536,7 @@ function _partno_attach_partno_or_idx(partno, idx, start_new=false) =
 //      annotate(show=["spec"]);
 // 
 module spec(list) {
+    req_children($children);
     $_anno_spec = list;
     children();
 }
@@ -543,6 +565,7 @@ module spec(list) {
 //   obj() documentation is lacking, only because I don't feel like providing a mythical Object handler. 507common has the best examples, it'll be clearer in that repo.
 //
 module obj(obj=[], dimensions=[], flyouts=[]) {
+    req_children($children);
     log_info_if(( !_defined(obj) && !_defined(dimensions) && !_defined(flyouts) ), 
         "obj(): no Object, dimensions, or flyouts specified. Obj, dimension settings for subsequent children will be emptied.");
     $_anno_obj = obj;
@@ -775,7 +798,9 @@ function anno_assemble_partno(anno) =
     let(
         partno_ = anno_partno(anno),
         m_flat = anno_partno_sequence(anno),
-        nv = (_defined(m_flat) && _defined(partno_)) ? str_join(m_flat, "-") : undef
+        nv = (_defined(m_flat) && _defined(partno_)) 
+            ? anno_partno_str(anno)
+            : undef
     )
     anno_partno(anno, nv=nv);
 
@@ -791,6 +816,17 @@ function anno_partno_sequence(anno) =
             ])
     ) 
     list_remove_values(mm, undef, all=true);
+
+function anno_partno_str(anno) = 
+    let(
+        anno_ = (_defined(anno)) 
+            ? anno 
+            : Annotation([
+                "label", first([$_anno_labelname, undef]), 
+                "partno", first([$_anno_partno, undef])
+                ])
+    )
+    str_join(anno_partno_sequence(anno_), "-");
 
 
 /// Function: anno_active_block_headers()
