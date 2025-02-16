@@ -216,6 +216,7 @@ module desc(name) {
 // Arguments:
 //   val = A string to append to the current part numbers. 
 //   start_new = A boolean which, if set to `true`, clears previous part numbers from the hirearchy before applying `val`. Default: `false`
+//   distance = When parting out, use `distance` to specify how far away to place attached elements. Default: `60`
 //
 // Continues:
 //   **Parting out:** Part-numbers have a second use, in addition to providing annotation markings for models: `partno()` 
@@ -319,16 +320,13 @@ module desc(name) {
 //
 module partno(partno, start_new=false, distance=60) {
     req_children($children);
-    $_anno_partno = (start_new)
-        ? [ partno ]
-        : (_defined($_anno_partno)) 
-            ? concat($_anno_partno, partno) 
-            : [ partno ];
 
-    anno_partno_str = anno_partno_str();
+    $_anno_partno = anno_partno_attach_partno_or_idx(partno, start_new=start_new);
+
+    partno_str = anno_partno_str();
 
     if (LIST_PARTS)
-        echo(str("PART:", anno_partno_str));
+        echo(str("PART:", partno_str));
 
     trans_vector = (EXPAND_PARTS || $_EXPAND_PARTS)
         ? anno_partno_translate(d=distance)
@@ -338,7 +336,11 @@ module partno(partno, start_new=false, distance=60) {
         ? [str($tag_prefix, HIGHLIGHT_PART)]
         : $tags_shown;
 
-    tag(anno_partno_str)
+    default_tag_or_partno_str = (is_undef(partno)) 
+        ? $tag
+        : partno_str;
+
+    tag(default_tag_or_partno_str)
         move(trans_vector)
             children();
 }
@@ -351,23 +353,62 @@ module partno(partno, start_new=false, distance=60) {
 // Description:
 //   Combines the functionality of BOSL2's `attach()` and `partno()`. 
 //   .
-//   You'll need to review the documentation for `attach()`.
+//   This module differs from `attach()` in the following ways:
+//   .
+//   1. partno assignent: when the `partno` argument is set to something, that number or string will be 
+//   appended to the sequence of part numbering in the current hierarchy. If annotated with `annotate()`, 
+//   the part number for that model will be displaed as a flyout. 
+//   *Note that* children are explicitly `tag()`ed with their part number as they're modeled. `attach()` uses 
+//   `tag_default()` to set children to `"remove"` if not already set; `partno_attach()` will mimic this 
+//   behavior if there is no partno to work with; otherwise, any existing tag higher up in the 
+//   child's hierarchy will be discarded in favor of the partno. 
+//   .
+//   2. `EXPAND_PARTS` implemented: if the `EXPAND_PARTS` global is set to `true`, `partno_attach()` will place 
+//   models `distance` length away from their parents' attachment points. The distances are 
+//   `$t`-time modified to space models away from their parents; if animated, the parts will 
+//   move towards their attachments. A connecting dashed line between models will be displayed, 
+//   showing where children are meant to meet up with their parents.
+//   .
+//   3. `LIST_PARTS` implemented: if the `LIST_PARTS` global is set to `true`, `partno_attach()` will 
+//   emit part numbers to the console as it finds them. If run from the command-line non-interactively, 
+//   the part numbers will be emitted to STDOUT. Note that part numbers are emitted whether or not the 
+//   child is modeled in-scene.
+//   .
+//   4. `HIGHLIGHT_PART` implemented: if `HIGHLIGHT_PART` is set to a partno-string value, `partno_attach()` 
+//   will adjust the `$tags_shown` variable and _only_ that part will be modeled in-scene. This is a
+//   reimplementation of how `show_only()` works, but without having to place `show_only()` somewhere in the hierarchy.
+//   .
+//   At the time of this writing, 
+//   the `attach()` module used as a base is from BOSL2 circa 2025-02-13 (it is still pre-release, 
+//   and the version string within BOSL2's versions.scad isn't being kept up to date).
+//   .
+//   You'll need to review the documentation for `attach()` for a full understanding of how attachments work;
+//   explaining this is outside the scope of the `partno_attach()` documentation. You'll also need to review 
+//   the documentation for `partno()` for a full understanding of how part numbers are assigned and displayed.
 //
 // Arguments:
-//   from = The vector, or name of the parent anchor point to attach to.
-//   to = Optional name of the child anchor point.  If given, orients the child such that the named anchors align together rotationally.
+//   parent = The parent anchor point to attach to or a list of parent anchor points.
+//   child = Optional child anchor point.  If given, orients the child to connect this anchor point to the parent anchor.
 //   ---
+//   align = If `child` is given you can specify alignment or list of alistnments to shift the child to an edge or corner of the parent. 
+//   inset = Shift aligned children away from their alignment edge/corner by this amount.  Default: 0
 //   overlap = Amount to sink child into the parent.  Equivalent to `down(X)` after the attach.  This defaults to the value in `$overlap`, which is `0` by default.
-//   partno = A string to append to the current part numbers. When `partno` is unspecified, `partno_attach()` behaves the same as `attach()`. If `partno` is set to the literal value `"idx"`, the attach value `$idx` will be used. Default: `undef` 
-//   norot = If true, don't rotate children when attaching to the anchor point.  Only translate to the anchor point. Default: `false`
+//   inside = If `child` is given you can set `inside=true` to attach the child to the inside of the parent for diff() operations.  Default: false
+//   shiftout = Shift an inside object outward so that it overlaps all the aligned faces.  Default: 0
+//   spin = Amount to rotate the parent around the axis of the parent anchor.  Can set to "align" to align the child's BACK with the parent aligned edge.  (Only permitted in 3D.)
+//   partno = A string to append to the current part numbers. No default. 
 //   start_new = A boolean which, if set to `true`, clears previous part numbers from the hirearchy before applying `val`. Default: `false`
 //   distance = When parting out, use `distance` to specify how far away to place attached elements. Default: `60`
 //
 // Side Effects:
-//   `$idx` is set to the index number of each anchor if a list of anchors is given.  Otherwise is set to `0`.
-//   `$attach_anchor` for each `from=` anchor given, this is set to the `[ANCHOR, POSITION, ORIENT, SPIN]` information for that anchor.
-//   `$attach_to` is set to the value of the `to=` argument, if given.  Otherwise, `undef`
-//   `$attach_norot` is set to the value of the `norot=` argument.
+//   `$anchor` set to the parent anchor value used for the child.
+//   `$align` set to the align value used for the child.  
+//   `$idx` set to a unique index for each child, increasing by alignment first.
+//   `$attach_anchor` for each anchor given, this is set to the `[ANCHOR, POSITION, ORIENT, SPIN]` information for that anchor.
+//   if `inside` is true and no `partno` was set then set default tag to "remove"
+//   `$attach_to` is set to the value of the `child` argument, if given.  Otherwise, `undef`
+//   `$edge_angle` is set to the angle of the edge if the anchor is on an edge and the parent is a prismoid or vnf with "hull" anchoring
+//   `$edge_length` is set to the length of the edge if the anchor is on an edge and the parent is a prismoid or vnf with "hull" anchoring
 //   `$_anno_partno` is set to the combined value of previously set `$_anno_partno` plus the new `partno`.
 //
 // Continues:
@@ -384,7 +425,7 @@ module partno(partno, start_new=false, distance=60) {
 //   from the parent to illustrate its placement. In addition, a thin leader line is drawn between the 
 //   parent and child, clarifying placement and relation.
 //
-// Example: `partno()`'s Example 2, above, but with using `partno_attach()`: a hirearchical part-number use, showing inheritance of the part-numbers within a tree:
+// Example(3D): `partno()`'s Example 2, above, but with using `partno_attach()`: a hirearchical part-number use, showing inheritance of the part-numbers within a tree:
 //   partno(30)
 //     cuboid(30) {
 //       annotate(show=["partno"]);
@@ -397,7 +438,7 @@ module partno(partno, start_new=false, distance=60) {
 //         }
 //     }
 //
-// Example: `partno()`'s Example 6, above, but with `partno_attach()`: using `$idx` as a value doesn't work with `partno_attach()` (because at the time of invocation, `$idx` isn't set correctly), but you *can* use the literal string `"idx"` as a value, and `partno_attach()` will do the right thing. This works in a distributor, and also when specifying multiple attachable anchor points in a single attach call:
+// Example(3D): `partno()`'s Example 6, above, but with `partno_attach()`: using `$idx` as a value doesn't work with `partno_attach()` (because at the time of invocation, `$idx` isn't set correctly), but you *can* use the literal string `"idx"` as a value, and `partno_attach()` will do the right thing. This works in a distributor, and also when specifying multiple attachable anchor points in a single attach call:
 //   partno(1)
 //     cuboid(30)
 //       partno_attach([TOP,BOTTOM,LEFT,RIGHT,FWD,BACK], BOTTOM, partno="idx")
@@ -405,90 +446,239 @@ module partno(partno, start_new=false, distance=60) {
 //           annotate(show=["partno"], anchor=TOP, leader_len=3);
 //
 //
-// Example: a simple `partno_attach()` relation, with `EXPAND_PARTS` set as `false` (which is the default):
+// Example(3D,NoAxes): a simple `partno_attach()` relation, with `EXPAND_PARTS` set as `false` (which is the default):
 //   EXPAND_PARTS = false;
 //   label("A")
 //       tube(id=4, od=8, h=5) {
 //           annotate(show=["label", "partno"]);
-//           partno_attach(CENTER, undef, 0, 1)
+//           partno_attach(CENTER, undef, partno=1)
 //               cyl(d=4, h=10)
 //                   annotate(show=["label", "partno"]); 
 //       }
 //
-// Example: the same `partno_attach()` relation, with expansion enabled:
+// Example(3D,NoAxes): the same `partno_attach()` relation, with expansion enabled:
 //   EXPAND_PARTS = true;
 //   label("A")
 //       tube(id=4, od=8, h=5) {
 //           annotate(show=["label", "partno"]);
-//           partno_attach(CENTER, undef, 0, 1)
+//           partno_attach(CENTER, undef, partno=1)
 //               cyl(d=4, h=10)
 //                   annotate(show=["label", "partno"]); 
 //       }
 //
-// Todo:
-//   leader lines between children, parents are drawn with a cylinder, itself attached to the anchor point. I'd much rather that be a dashed stroke.
+// Example(3D): A sphere attached to the top of a cube, but with `HIGHLIGHT_PART` set to limit only the sphere:
+//   HIGHLIGHT_PART = "EX-1-1";
+//   partno(1)
+//      cuboid(5)
+//         partno_attach(TOP, BOTTOM, partno=1)
+//            sphere(3);
 //
-module partno_attach(from, to, overlap, partno=undef, norot=false, start_new=false, distance=60) {
+//
+module partno_attach(parent, child, overlap, align, spin=0, norot, inset=0, shiftout=0, inside=false, from, to, partno=undef, start_new=false, distance=20)
+{
+    // ## partno_attach() args: the partno, start_new, and distance arguments are added above
+    dummy3=
+      assert(num_defined([to,child])<2, "Cannot combine deprecated 'to' argument with 'child' parameter")
+      assert(num_defined([from,parent])<2, "Cannot combine deprecated 'from' argument with 'parent' parameter")
+      assert(spin!="align" || is_def(align), "Can only set spin to \"align\" when the 'align' parameter is given")
+      assert(is_finite(spin) || spin=="align", "Spin must be a number (unless align is given)")
+      assert((is_undef(overlap) || is_finite(overlap)) && (is_def(overlap) || is_undef($overlap) || is_finite($overlap)),
+             str("Provided ",is_def(overlap)?"":"$","overlap is not valid."));
+    if (is_def(to))
+      echo("The 'to' option to attach() is deprecated and will be removed in the future.  Use 'child' instead.");
+    if (is_def(from))
+      echo("The 'from' option to attach(0 is deprecated and will be removed in the future.  Use 'parent' instead");
+    if (norot)
+      echo("The 'norot' option to attach() is deprecated and will be removed in the future.  Use position() instead.");
     req_children($children);
-    assert($parent_geom != undef, "No object to attach to!");
+    
+    dummy=assert($parent_geom != undef, "No object to attach to!")
+          assert(is_undef(child) || is_string(child) || (is_vector(child) && (len(child)==2 || len(child)==3)),
+                 "child must be a named anchor (a string) or a 2-vector or 3-vector")
+          assert(is_undef(align) || !is_string(child), "child is a named anchor.  Named anchors are not supported with align=");
 
-    //$tags_shown = (_defined(HIGHLIGHT_PART)) ? [HIGHLIGHT_PART] : "ALL";
-    $tags_shown = (_defined($tags_shown) && is_list($tags_shown))
-        ? $tags_shown
-        : (_defined(HIGHLIGHT_PART)) 
-            ? [HIGHLIGHT_PART] 
-            : "ALL";
+    two_d = _attach_geom_2d($parent_geom);
+    basegeom = $parent_geom[0]=="conoid" ? attach_geom(r=2,h=2,axis=$parent_geom[5])
+             : $parent_geom[0]=="prismoid" ? attach_geom(size=[2,2,2],axis=$parent_geom[4])
+             : attach_geom(size=[2,2,2]);
+    childgeom = attach_geom([2,2,2]);
+    child_abstract_anchor = is_vector(child) && !two_d ? _find_anchor(_make_anchor_legal(child,childgeom), childgeom) : undef;
 
+    // ## partno_t_offset: set an offset value based on the distance argument and the value of $t
     partno_t_offset = -1 * (distance - (distance * ($t + 0.0999)));
-    overlap = ((overlap!=undef)? overlap : $overlap) 
-        + (((EXPAND_PARTS || $_EXPAND_PARTS) && _defined(partno)) 
-            ? partno_t_offset 
+
+    // ## overlap: conditionally modify the overlap to the offset if EXPAND_PARTS and ok_to_annotate() are 
+    // both true; otherwise, leave the existing specified value of overlap alone
+    overlap = ((overlap!=undef)? overlap : $overlap)
+        + (((EXPAND_PARTS || $_EXPAND_PARTS) && !is_undef(partno))
+            ? partno_t_offset
             : 0);
 
-    anchors = (is_vector(from)||is_string(from))? [from] : from;
-    for ($idx = idx(anchors)) {
-        $_anno_partno = _partno_attach_partno_or_idx(partno, $idx, start_new);
-        if (LIST_PARTS)
-            echo(str("PART:", anno_partno_str()));
-        anchr = anchors[$idx];
-        anch = _find_anchor(anchr, $parent_geom);
-        two_d = _attach_geom_2d($parent_geom);
-        $attach_to = to;
-        $attach_anchor = anch;
-        $attach_norot = norot;
-        olap = two_d? [0,-overlap,0] : [0,0,-overlap];
-        anno_pn = anno_partno_str();
-        if (norot || (norm(anch[2]-UP)<1e-9 && anch[3]==0)) {
-            translate(anch[1]) translate(olap) tag(anno_pn) children();
-        } else {
-            fromvec = two_d? BACK : UP;
-            translate(anch[1]) rot(anch[3],from=fromvec,to=anch[2]) translate(olap) tag(anno_pn) children();
-        }
+    parent = first_defined([parent,from]);
+    anchors = is_vector(parent) || is_string(parent) ? [parent] : parent;
+    align_list = is_undef(align) ? [undef]
+               : is_vector(align) || is_string(align) ? [align] : align;
+    dummy4 = assert(is_string(parent) || is_list(parent), "Invalid parent anchor or anchor list")
+             assert(spin==0 || (!two_d || is_undef(child)), "spin is not allowed for 2d objects when 'child' is given");
+    child_temp = first_defined([child,to]);
+    child = two_d ? _force_anchor_2d(child_temp) : child_temp;
+    dummy2=assert(align_list==[undef] || is_def(child), "Cannot use 'align' without 'child'")
+           assert(!inside || is_def(child), "Cannot use 'inside' without 'child'")
+           assert(inset==0 || is_def(child), "Cannot specify 'inset' without 'child'")
+           assert(inset==0 || is_def(align), "Cannot specify 'inset' without 'align'")
+           assert(shiftout==0 || is_def(child), "Cannot specify 'shiftout' without 'child'");
+    factor = inside?-1:1;
+    $attach_to = child;
 
-        /// TODO: I like this a lot better; however, when from and to are both CENTER, 
-        ///       it behaves badly. (probably happens when from and to are identical for 
-        ///       both parent and child.)
-        ///if (EXPAND_PARTS && ok_to_annotate()) {
-        ///    pr = [anch[1], move(anch[2] * abs(overlap * 0.1), p=anch[1])];
-        ///    part_path = line_extend(pr, tail_ext=abs(overlap * 0.9));
-        ///    color("black", alpha=0.3)
-        ///        dashed_stroke(part_path, [10, 2, 3, 2, 3, 2], width=0.3, closed=false);
-        ///}
-        if (_defined(partno) && (EXPAND_PARTS || $_EXPAND_PARTS) && ok_to_annotate()) {
-            fromvec = two_d ? BACK : UP;
-            $attach_to = BOTTOM;
-            translate(anch[1]) 
-                rot(anch[3], from=fromvec, to=anch[2])
-                    color("black", alpha=0.3) 
-                        cyl(d=0.3, l=abs(overlap));
+    // ## tags_shown: conditionally modify $tags_shown here to be that of HIGHLIGHT_PART 
+    // if that global is set to a valid partno string; otherwise, leave $tags_shown as-is.
+    $tags_shown = (_defined(HIGHLIGHT_PART))
+        ? [str($tag_prefix, HIGHLIGHT_PART)]
+        : $tags_shown;
+
+    for (anch_ind = idx(anchors)) {
+        dummy=assert(is_string(anchors[anch_ind]) || (is_vector(anchors[anch_ind]) && (len(anchors[anch_ind])==2 || len(anchors[anch_ind])==3)),
+                     str("parent[",anch_ind,"] is ",anchors[anch_ind]," but it must be a named anchor (string) or a 2-vector or 3-vector"))
+              assert(align_list==[undef] || !is_string(anchors[anch_ind]),
+                     str("parent[",anch_ind,"] is a named anchor (",anchors[anch_ind],"), but named anchors are not supported with align="));
+        anchor = is_string(anchors[anch_ind])? anchors[anch_ind]
+               : two_d?_force_anchor_2d(anchors[anch_ind])
+               : point3d(anchors[anch_ind]);
+        $anchor=anchor;
+        anchor_data = _find_anchor(anchor, $parent_geom);
+        $edge_angle = len(anchor_data)==5 ? struct_val(anchor_data[4],"edge_angle") : undef;
+        $edge_length = len(anchor_data)==5 ? struct_val(anchor_data[4],"edge_length") : undef;
+        $edge_end1 = len(anchor_data)==5 ? struct_val(anchor_data[4],"vec") : undef;
+        anchor_pos = anchor_data[1];
+        anchor_dir = factor*anchor_data[2];
+        anchor_spin = two_d || !inside || anchor==TOP || anchor==BOT ? anchor_data[3]
+                    : let(spin_dir = rot(anchor_data[3],from=UP, to=-anchor_dir, p=BACK))
+                      _compute_spin(anchor_dir,spin_dir);
+        parent_abstract_anchor = is_vector(anchor) && !two_d ? _find_anchor(_make_anchor_legal(anchor,basegeom),basegeom) : undef;
+        for(align_ind = idx(align_list)){
+            align = is_undef(align_list[align_ind]) ? undef
+                  : assert(is_vector(align_list[align_ind],2) || is_vector(align_list[align_ind],3), "align direction must be a 2-vector or 3-vector")
+                    two_d ? _force_anchor_2d(align_list[align_ind])
+                  : point3d(align_list[align_ind]);
+            spin = is_num(spin) ? spin
+                 : align==CENTER ? 0
+                 : sum(v_abs(anchor))==1 ?   // parent anchor is a face
+                   let(
+                       spindir = in_list(anchor,[TOP,BOT]) ? BACK : UP,
+                       proj = project_plane(point4d(anchor),[spindir,align]),
+                       ang = v_theta(proj[1])-v_theta(proj[0])
+                   )
+                   ang
+                 : // parent anchor is not a face, so must be an edge (corners not allowed)
+                   let(
+                        nativeback = apply(rot(to=parent_abstract_anchor[2],from=UP)
+                                       *affine3d_zrot(parent_abstract_anchor[3]), BACK)
+                    )
+                    nativeback*align<0 ? -180:0;
+            $idx = align_ind+len(align_list)*anch_ind;
+            $align=align;
+            goodcyl = $parent_geom[0] != "conoid" || is_undef(align) || align==CTR ? true
+                    : let(
+                           align=rot(from=$parent_geom[5],to=UP,p=align),
+                           anchor=rot(from=$parent_geom[5],to=UP,p=anchor)
+                      )
+                      anchor==TOP || anchor==BOT || align==TOP || align==BOT;
+            badcorner = !in_list($parent_geom[0],["conoid","spheroid"]) && !is_undef(align) && align!=CTR && sum(v_abs(anchor))==3;
+            badsphere = $parent_geom[0]=="spheroid" && !is_undef(align) && align!=CTR;
+            dummy=assert(is_undef(align) || all_zero(v_mul(anchor,align)),
+                         str("Invalid alignment: align value (",align,") includes component parallel to parent anchor (",anchor,")"))
+                  assert(goodcyl, str("Cannot use align with an anchor on a curved edge or surface of a cylinder at parent anchor (",anchor,")"))
+                  assert(!badcorner, str("Cannot use align at a corner anchor (",anchor,")"))
+                  assert(!badsphere, "Cannot use align on spheres.");
+            // Now compute position on the parent (including alignment but not inset) where the child will be anchored
+            pos = is_undef(align) ? anchor_data[1] : _find_anchor(anchor+align, $parent_geom)[1];
+            $attach_anchor = list_set(anchor_data, 1, pos);      // Never used;  For user informational use?  Should this be set at all?
+            // Compute adjustment to the child anchor for position purposes.  This adjustment
+            // accounts for the change in the anchor needed to to alignment.
+            child_adjustment = is_undef(align)? CTR
+                              : two_d ? rot(to=child,from=-factor*anchor,p=align)
+                              : apply(   rot(to=child_abstract_anchor[2],from=UP)
+                                            * affine3d_zrot(child_abstract_anchor[3])
+                                            * affine3d_yrot(inside?0:180)
+                                       * affine3d_zrot(-parent_abstract_anchor[3])
+                                            *  rot(from=parent_abstract_anchor[2],to=UP)
+                                            * rot(v=anchor,-spin),
+                                      align);
+            // The $anchor_override anchor value forces an override of the *position* only for the anchor
+            // used when attachable() places the child
+            $anchor_override = all_zero(child_adjustment)? inside?child:undef
+                             : child+child_adjustment;
+            reference = two_d? BACK : UP;
+            // inset_dir is the direction for insetting when alignment is in effect
+            inset_dir = is_undef(align) ? CTR
+                      : two_d ? rot(to=reference, from=anchor,p=align)
+                      : apply(affine3d_yrot(inside?180:0)
+                                * affine3d_zrot(-parent_abstract_anchor[3])
+                                * rot(from=parent_abstract_anchor[2],to=UP)
+                                * rot(v=anchor,-spin),
+                              align); 
+            spinaxis = two_d? UP : anchor_dir;
+            olap = - overlap * reference - inset*inset_dir + shiftout * (inset_dir + factor*reference);
+
+            // ## anno_partno: establish the partno for the upcoming part. This may 
+            // involve the $idx value, so we cannot do that until we reach this point.
+            $_anno_partno = anno_partno_attach_partno_or_idx(partno, $idx, start_new);
+            partno_str = anno_partno_str();
+
+            // ## LIST_PARTS: conditionally emit the full partno here to the console if 
+            // the LIST_PARTS global is true
+            if (LIST_PARTS)
+                echo(str("PART:", partno_str));
+
+            // ## conditionally set a tag value if partno is set; if it's not set, mimic the 
+            // existing behavior and conditionally set a tag to "remove", if there no tag set and
+            // if the `inside` bool is true. 
+            default_tag_or_partno_str = (is_undef(partno_str)) 
+                ? ($tag == "" && inside) ? "remove" : $tag
+                : partno_str;
+
+            // ## Below, the calls to `default_tag()` are removed and replaced
+            // with `tag()`, with the `default_tag_or_partno_str` string.
+            if (norot || (approx(anchor_dir,reference) && anchor_spin==0)) 
+                translate(pos) rot(v=spinaxis,a=factor*spin) translate(olap) tag(default_tag_or_partno_str) children();
+            else  
+                translate(pos)
+                    rot(v=spinaxis,a=factor*spin)
+                    rot(anchor_spin,from=reference,to=anchor_dir)
+                    translate(olap)
+                    tag(default_tag_or_partno_str) children();
+
+            // ## conditionally attach the annotation extension lines 
+            // to the specified anchor. 
+            if ((EXPAND_PARTS || $_EXPAND_PARTS) && ok_to_annotate())
+                attach(anchor)
+                    anno_dashed_line(partno_t_offset, anchor=TOP);
         }
     }
 }
 
-/// Function: _partno_attach_partno_or_idx()
+
+/// Module: anno_dashed_line()
+/// Synopsis: Models an attachable dashed line
+/// Usage:
+///   anno_dashed_line(length);
+///   anno_dashed_line(length, <diam=0.3>, <color="black">, <alpha=0.4>, <anchor=BOTTOM>, <spin=0>, <orient=UP>);
+/// Description:
+///   Given a distance `length`, models an attachable dotted line.
+module anno_dashed_line(length, diam=0.3, color="black", alpha=0.4, anchor=BOTTOM, spin=0, orient=UP) {
+    attachable(anchor, spin, orient, l=length, d=diam) {
+        down(length/2)
+            color(color, alpha)
+                dashed_stroke([[0, 0, 0], [0, 0, length]], [10, 3], width=diam, closed=false);
+        children();
+    }
+}
+
+
+/// Function: anno_partno_attach_partno_or_idx()
 /// Synopsis: generates a suitable partno for elements within partno_attach()
 /// Usage:
-///   partno = _partno_attach_partno_or_idx(partno, idx, start_new);
+///   partno = anno_partno_attach_partno_or_idx(partno, idx, start_new);
 /// Description:
 ///   Given a user-provided part-number `partno`, an index value of attachable elements `idx` (basically 
 ///   the same thing as `$idx`), and a boolean `start_new`, returns a partno value suitable 
@@ -499,9 +689,9 @@ module partno_attach(from, to, overlap, partno=undef, norot=false, start_new=fal
 ///   .
 ///   Note this precludes the use of *ever* using the literal "idx" as a part-number component. 
 ///   I'm ok with that.
-function _partno_attach_partno_or_idx(partno, idx, start_new=false) = 
+function anno_partno_attach_partno_or_idx(partno, idx=undef, start_new=false) = 
     let(
-        pn = (partno == "idx") ? idx : partno,
+        pn = (partno == "idx" && !is_undef(idx)) ? idx : partno,
         apno = (!_defined(pn))
             ? $_anno_partno
             : (start_new)
@@ -511,9 +701,6 @@ function _partno_attach_partno_or_idx(partno, idx, start_new=false) =
                     : [pn]
     )
     apno;
-
-
-
 
 
 // Module: spec()
