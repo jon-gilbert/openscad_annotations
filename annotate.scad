@@ -788,6 +788,21 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
 
 /// ----------------------------------------------------------------------------------
 
+/// Function: anno_partno_list()
+/// Synopsis: Return a list of part number elements
+/// Usage:
+///   list = anno_partno_list();
+///   list = anno_partno_list(<anno=Annotation object>, <mech_number=true>, <label=true>);
+/// Description:
+///   Returns a list of part number elements as `list`. 
+///   If an explicit Annotation object is passed via the `anno` argument, 
+///   `anno_partno_list()` will use that object instead of gleaning the 
+///   current Annotation state from local- and dollar-sign-prefixed- variables. 
+///
+/// Arguments:
+///   anno = An Annotation object. If unspecified, a new Annotation object will be instantiated for `anno_partno_list()`.
+///   mech_number = If set to `true`, will include the mech number (if set) in the returned partno list. Default: `true`
+///   label = If set to `true`, will include the label number (if set) in the returned partno list. Default: `true`
 function anno_partno_list(anno=Annotation(), mech_number=true, label=true) =
     let(
         apl = flatten([
@@ -798,7 +813,21 @@ function anno_partno_list(anno=Annotation(), mech_number=true, label=true) =
     )
     list_remove_values(apl, undef, all=true);
 
-
+/// Function: anno_partno_str()
+/// Synopsis: Return the current partno as a string
+/// Usage:
+///   str = anno_partno_str();
+///   str = anno_partno_str(<anno=Annotation object>, <mech_number=true>, <label=true>);
+/// Description:
+///   Returns the current part number as a single string `str`. 
+///   If an explicit Annotation object is passed via the `anno` argument, 
+///   `anno_partno_str()` will use that object instead of gleaning the 
+///   current Annotation state from local- and dollar-sign-prefixed- variables. 
+///
+/// Arguments:
+///   anno = An Annotation object. If unspecified, a new Annotation object will be instantiated for `anno_partno_str()`.
+///   mech_number = If set to `true`, will include the mech number (if set) in the returned partno string. Default: `true`
+///   label = If set to `true`, will include the label number (if set) in the returned partno string. Default: `true`
 function anno_partno_str(anno=Annotation(), mech_number=true, label=true) = 
     str_join(anno_partno_list(anno, mech_number, label), "-");
 
