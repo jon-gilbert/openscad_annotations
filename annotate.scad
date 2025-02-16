@@ -357,7 +357,9 @@ module partno(partno, start_new=false, distance=60) {
 //   .
 //   1. partno assignent: when the `partno` argument is set to something, that number or string will be 
 //   appended to the sequence of part numbering in the current hierarchy. If annotated with `annotate()`, 
-//   the part number for that model will be displaed as a flyout. 
+//   the part number for that model will be displayed as a flyout. For multiple parental anchors, 
+//   using the literal `"idx"` as a `partno` will tell `partno_attach()` to use the internally 
+//   generated `$idx` as the partno. 
 //   *Note that* children are explicitly `tag()`ed with their part number as they're modeled. `attach()` uses 
 //   `tag_default()` to set children to `"remove"` if not already set; `partno_attach()` will mimic this 
 //   behavior if there is no partno to work with; otherwise, any existing tag higher up in the 
@@ -378,6 +380,8 @@ module partno(partno, start_new=false, distance=60) {
 //   will adjust the `$tags_shown` variable and _only_ that part will be modeled in-scene. This is a
 //   reimplementation of how `show_only()` works, but without having to place `show_only()` somewhere in the hierarchy.
 //   .
+//   The changes were kept to an absolute minimum; BOSL2's `attach()` is otherwise as-is, as of 
+//   2025-02-13. 
 //   At the time of this writing, 
 //   the `attach()` module used as a base is from BOSL2 circa 2025-02-13 (it is still pre-release, 
 //   and the version string within BOSL2's versions.scad isn't being kept up to date).
@@ -424,6 +428,13 @@ module partno(partno, start_new=false, distance=60) {
 //   the `overlap`, dragging the child along its attached vector to a position hopefully far enough away 
 //   from the parent to illustrate its placement. In addition, a thin leader line is drawn between the 
 //   parent and child, clarifying placement and relation.
+//   .
+//   Because `partno_attach()` can process and apply multiple parental anchors, it can behave like a 
+//   BOSL2 distributor, scattering multiple identical children to various anchors on the parent. Each of 
+//   those distributed model copies is assigned an index via a `$idx` scoped variable. `partno_attach()`
+//   uses a `partno` of `"idx"` as the signal to use `$idx` as the new part-number value. Note that this
+//   precludes the future ability to use the literal string `"idx"` as a part number element, and I'm
+//   OK with that.
 //
 // Example(3D): `partno()`'s Example 2, above, but with using `partno_attach()`: a hirearchical part-number use, showing inheritance of the part-numbers within a tree:
 //   partno(30)
