@@ -330,9 +330,13 @@ module partno(partno, start_new=false) {
     if (LIST_PARTS)
         echo(str("PART:", anno_partno_str));
 
-    trans_vector = (EXPAND_PARTS || $_EXPAND_PARTS) ? partno2translate() : [0,0,0];
+    trans_vector = (EXPAND_PARTS || $_EXPAND_PARTS)
+        ? anno_partno_translate()
+        : [0,0,0];
 
-    $tags_shown = (_defined(HIGHLIGHT_PART)) ? [HIGHLIGHT_PART] : "ALL";
+    $tags_shown = (_defined(HIGHLIGHT_PART))
+        ? [str($tag_prefix, HIGHLIGHT_PART)]
+        : $tags_shown;
 
     tag(anno_partno_str) //echo("curr tag:", $tag) echo("tags_shown:", $tags_shown)
         move(trans_vector)
@@ -716,9 +720,9 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
                     : log_warning_assign([show], ["Unclear value for `show`:", show, "; treating this as a valid annotation type as-is"]);
 
     // build an Annotation object with what we know from scope-specific variables passed down to us:
-    anno_ = Annotation([
+    anno = Annotation([
             "label",  _first([label,  $_anno_labelname]),
-            "partno", _first([partno, $_anno_partno]), // but look below: we reassign this attr later
+            "partno", _first([partno, $_anno_partno]),
             "spec",   _first([spec,   $_anno_spec]),
             "obj",    _first([obj,    $_anno_obj]),
             "desc",   _first([desc,   $_anno_desc]),
@@ -726,7 +730,6 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
             "alpha",  alpha,
             "leader_len", leader_len
             ]);
-    anno = (_defined(anno_partno(anno_))) ? anno_assemble_partno(anno_) : anno_;
 
     // list out the known blocks, but only for the ones we asked for:
     blocks = set_intersection(anno_active_block_headers(anno), show_);
@@ -747,7 +750,7 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
                     anno_size_for_attr("label"), ] 
                 : undef,
             (in_list("partno", blocks))
-                ? [ [anno_partno(anno)], 
+                ? [ [anno_partno_str(anno)], 
                     anno_size_for_attr("partno"),] 
                 : undef,
             (in_list("desc", blocks))
@@ -784,58 +787,20 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
 }
 
 /// ----------------------------------------------------------------------------------
-/// Function: anno_assemble_partno()
-/// Synopsis: Assemble a complete partno string
-/// Usage:
-///   anno_obj = anno_assemble_partno(anno);
-///
-/// Description:
-///   Given an Annotation object `anno`, build a full part-number string 
-///   based on all the elements that go into the part-number, 
-///   set that to the Object's `partno` attribute and return an 
-///   entirely new Annotation object `anno_obj`. The existing Annotation 
-///   object is unmodified. 
-///
-/// Arguments:
-///   anno = An Annotation object
-///   
-/// Todo:
-///   Grr - sure would be swell if we could automatically detect the use of `$idx` here without openscad barfing all over us. Yeap. 
-///   this... may not be fully operational. there's a lot going on here and I'm not sure this will work in all cases. It seems to meet our needs today.
-///
-function anno_assemble_partno(anno) = 
-    let(
-        partno_ = anno_partno(anno),
-        m_flat = anno_partno_sequence(anno),
-        nv = (_defined(m_flat) && _defined(partno_)) 
-            ? anno_partno_str(anno)
-            : undef
-    )
-    anno_partno(anno, nv=nv);
 
-function anno_partno_sequence(anno) = 
+function anno_partno_list(anno=Annotation(), mech_number=true, label=true) =
     let(
-        mech_num_ = anno_mech_number(anno),
-        partno_ = anno_partno(anno),
-        label_ = anno_label(anno),
-        mm = flatten([
-            mech_num_, 
-            (_defined(label_))  ? label_           : undef,
-            (_defined(partno_)) ? flatten(partno_) : undef
-            ])
-    ) 
-    list_remove_values(mm, undef, all=true);
-
-function anno_partno_str(anno) = 
-    let(
-        anno_ = (_defined(anno)) 
-            ? anno 
-            : Annotation([
-                "label", first([$_anno_labelname, undef]), 
-                "partno", first([$_anno_partno, undef])
-                ])
+        apl = flatten([
+            (mech_number) ? anno_mech_number(anno) : undef,
+            (label) ? anno_label(anno) : undef,
+            flatten(anno_partno(anno))
+        ])
     )
-    str_join(anno_partno_sequence(anno_), "-");
+    list_remove_values(apl, undef, all=true);
+
+
+function anno_partno_str(anno=Annotation(), mech_number=true, label=true) = 
+    str_join(anno_partno_list(anno, mech_number, label), "-");
 
 
 /// Function: anno_active_block_headers()
@@ -956,40 +921,21 @@ function anno_list_to_block(list) = [
 ///   ---
 ///   d = Value used for distancing individual steps of movement. Default: `30`
 ///
-function partno2translate(d=50) =
+function anno_partno_translate(d=50, vectors=[]) =
     let(
-        anno = anno_assemble_partno(
-            Annotation([
-                "label", $_anno_labelname,
-                "partno", $_anno_partno
-                ])),
-        x = [ for (i=anno_partno_sequence(anno)) 
-                bin2vec( multi_bw_xor(str2bin(i)) ) ]
-    ) rec_mat(x, d);
-
-
-/// Function: rec_mat()
-/// Usage:
-///   v = rec_mat(vectors, distance);
-/// Description:
-///   Given a list of directions `vectors` and a distance value `distance`, 
-///   apply each as a `move()` activity and return the 
-///   resulting positional point as a vector list `v`.
-/// Arguments:
-///   vectors = A list of one or more vectors (not positions). No default
-///   distance = A distance value to apply to each vector direction in `vectors`. No default
-/// Continues:
-///   It is an error to specify an empty list of vectors.
-///   .
-///   It is not an error to not specify a `distance`, but perhaps it should be.
-function rec_mat(vectors, distance) =
-    assert(len(vectors) > 0)
+        vec = (len(vectors) > 0)
+            ? vectors
+            : [for (i=anno_partno_list()) bin2vec(multi_bw_xor(str2bin(i)))]
+    ) 
+    assert(len(vec) > 0)
     let(
-        u = vectors[0] * distance,
-        v = (len(vectors) > 1)
-            ? move( u, p=rec_mat(select(vectors, 1, -1), distance))
-            : move( u, p=[0,0,0] )
-    ) v;
+        u = vec[0] * d,
+        v = (len(vec) > 1)
+            ? move(u, p=anno_partno_translate(d=d, vectors=select(vec, 1, -1)))
+            : move(u, p=CENTER)
+    )
+    v;
+
 
 
 /// Function: bin2vec()
@@ -1063,7 +1009,7 @@ function bitwise_xor(a, b) =
 /// Example:
 ///   l = str2bin("yeet");
 ///   // l == [[0, 1, 1, 1, 1, 0, 0, 1], [0, 1, 1, 0, 0, 1, 0, 1], [0, 1, 1, 0, 0, 1, 0, 1], [0, 1, 1, 1, 0, 1, 0, 0]]
-function str2bin(s) = [for (i=s) ascii2bin(i)];
+function str2bin(s) = [for (i=s) ascii2bin(str(i))];
 
 
 /// Function: ascii2bin()
@@ -1082,11 +1028,10 @@ function str2bin(s) = [for (i=s) ascii2bin(i)];
 ///   // l == [0, 1, 1, 0, 0, 0, 0, 1]
 function ascii2bin(c) = 
     let(
-        _ = log_warning_if(len(c) > 1, 
-            str("ascii2bin(): length of ", 
-                c, 
-                " is > 1, only the first char will be used"))
-    ) dec2bin(ord(c[0]));
+        cs = str(c)
+    )
+    assert(len(cs) > 0)
+    dec2bin(ord(cs[0]));
 
 
 /// Function: dec2bin()
@@ -1108,7 +1053,8 @@ function dec2bin(d) =
         b = (len(bin) < 8)
             ? reverse(list_pad(reverse(bin), 8, 0))
             : bin
-    ) b;
+    )
+    b;
 
 function _dec2bin_rec(d) =
     let(
@@ -1116,7 +1062,8 @@ function _dec2bin_rec(d) =
         r = d - (q * 2),
         accum = (q > 0) ? _dec2bin_rec(q) : [],
         bin = list_insert(accum, len(accum), r)
-    ) bin;
+    )
+    bin;
 
 
 /// Infoblocks
@@ -1200,7 +1147,7 @@ function Annotation(vlist=[], mutate=[]) =
         o_ = Object("Annotation", Annotation_attrs, vlist=vlist, mutate=mutate),
         vl = [
             "mech_number", obj_accessor_get(o_, "mech_number", default=((!MECH_NUMBER) ? undef : MECH_NUMBER)),
-            "label",       obj_accessor_get(o_, "label",       default=$_anno_label),
+            "label",       obj_accessor_get(o_, "label",       default=$_anno_labelname),
             "partno",      obj_accessor_get(o_, "partno",      default=$_anno_partno),
         ]
     )
