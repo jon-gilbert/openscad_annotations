@@ -425,13 +425,22 @@ module partno(partno, start_new=false) {
 //   leader lines between children, parents are drawn with a cylinder, itself attached to the anchor point. I'd much rather that be a dashed stroke.
 //
 module partno_attach(from, to, overlap, partno=undef, norot=false, start_new=false, distance=60) {
-    partno_t_offset = -1 * (distance - (distance * ($t + 0.0999)));
-
     req_children($children);
     assert($parent_geom != undef, "No object to attach to!");
 
-    $tags_shown = (_defined(HIGHLIGHT_PART)) ? [HIGHLIGHT_PART] : "ALL";
-    overlap = ((overlap!=undef)? overlap : $overlap) + (((EXPAND_PARTS || $_EXPAND_PARTS) && _defined(partno)) ? partno_t_offset : 0);
+    //$tags_shown = (_defined(HIGHLIGHT_PART)) ? [HIGHLIGHT_PART] : "ALL";
+    $tags_shown = (_defined($tags_shown) && is_list($tags_shown))
+        ? $tags_shown
+        : (_defined(HIGHLIGHT_PART)) 
+            ? [HIGHLIGHT_PART] 
+            : "ALL";
+
+    partno_t_offset = -1 * (distance - (distance * ($t + 0.0999)));
+    overlap = ((overlap!=undef)? overlap : $overlap) 
+        + (((EXPAND_PARTS || $_EXPAND_PARTS) && _defined(partno)) 
+            ? partno_t_offset 
+            : 0);
+
     anchors = (is_vector(from)||is_string(from))? [from] : from;
     for ($idx = idx(anchors)) {
         $_anno_partno = _partno_attach_partno_or_idx(partno, $idx, start_new);
@@ -1186,7 +1195,16 @@ module infoblock_notok(s=10) {
 ///   mutate = An existing `anno` object on which to pre-set object values. Default: `[]`. 
 /// Example:
 ///   anno = Annotation();
-function Annotation(vlist=[], mutate=[]) = Object("Annotation", Annotation_attrs, vlist=vlist, mutate=mutate);
+function Annotation(vlist=[], mutate=[]) = 
+    let(
+        o_ = Object("Annotation", Annotation_attrs, vlist=vlist, mutate=mutate),
+        vl = [
+            "mech_number", obj_accessor_get(o_, "mech_number", default=((!MECH_NUMBER) ? undef : MECH_NUMBER)),
+            "label",       obj_accessor_get(o_, "label",       default=$_anno_label),
+            "partno",      obj_accessor_get(o_, "partno",      default=$_anno_partno),
+        ]
+    )
+    Object("Annotation", Annotation_attrs, vlist=vl, mutate=o_);
 
 /// Constant: Annotate_attributes
 /// Description:
