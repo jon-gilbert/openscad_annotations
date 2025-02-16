@@ -317,7 +317,7 @@ module desc(name) {
 //                  annotate(show="ALL");
 //        }
 //
-module partno(partno, start_new=false) {
+module partno(partno, start_new=false, distance=60) {
     req_children($children);
     $_anno_partno = (start_new)
         ? [ partno ]
@@ -331,14 +331,14 @@ module partno(partno, start_new=false) {
         echo(str("PART:", anno_partno_str));
 
     trans_vector = (EXPAND_PARTS || $_EXPAND_PARTS)
-        ? anno_partno_translate()
+        ? anno_partno_translate(d=distance)
         : [0,0,0];
 
     $tags_shown = (_defined(HIGHLIGHT_PART))
         ? [str($tag_prefix, HIGHLIGHT_PART)]
         : $tags_shown;
 
-    tag(anno_partno_str) //echo("curr tag:", $tag) echo("tags_shown:", $tags_shown)
+    tag(anno_partno_str)
         move(trans_vector)
             children();
 }
