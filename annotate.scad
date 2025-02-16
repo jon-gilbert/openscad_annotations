@@ -184,14 +184,14 @@ module desc(name) {
 // Module: partno()
 // Synopsis: Apply a part-number annotation to a hierarchy of children modules
 // Usage:
-//   partno(val) [CHILDREN];
+//   partno(partno) [CHILDREN];
 // Description:
-//   Appends `val` to existing part-numbers. A part-number is an identifier for discrete sub-sections of 
+//   Appends string `partno` to existing part-numbers. A part-number is an identifier for discrete sub-sections of 
 //   a model.
 //   .
-//   Appends `val` to existing part-numbers to all children hirearchically beneath the `partno()` call. 
+//   Appends `partno` to existing part-numbers to all children hirearchically beneath the `partno()` call. 
 //   Part-numbers are hirearchical and cumulatively collected, implying a chain of parentage. 
-//   Calling `partno()` multiple times in a child hirearchy will add each call's `val` to the part-number 
+//   Calling `partno()` multiple times in a child hirearchy will add each call's `partno` to the part-number 
 //   element list. 
 //   When annotated, the elements in the list of part-numbers are collected with a hyphen (`-`) at the 
 //   specified level.
@@ -214,8 +214,8 @@ module desc(name) {
 //   .
 //
 // Arguments:
-//   val = A string to append to the current part numbers. 
-//   start_new = A boolean which, if set to `true`, clears previous part numbers from the hirearchy before applying `val`. Default: `false`
+//   partno = A string to append to the current part numbers. 
+//   start_new = A boolean which, if set to `true`, clears previous part numbers from the hirearchy before applying `partno`. Default: `false`
 //   distance = When parting out, use `distance` to specify how far away to place attached elements. Default: `60`
 //
 // Continues:
@@ -360,7 +360,7 @@ module partno(partno, start_new=false, distance=60) {
 //   the part number for that model will be displayed as a flyout. For multiple parental anchors, 
 //   using the literal `"idx"` as a `partno` will tell `partno_attach()` to use the internally 
 //   generated `$idx` as the partno. 
-//   *Note that* children are explicitly `tag()`ed with their part number as they're modeled. `attach()` uses 
+//   Children are explicitly `tag()`ed with their part number as they're modeled. `attach()` uses 
 //   `tag_default()` to set children to `"remove"` if not already set; `partno_attach()` will mimic this 
 //   behavior if there is no partno to work with; otherwise, any existing tag higher up in the 
 //   child's hierarchy will be discarded in favor of the partno. 
@@ -380,11 +380,8 @@ module partno(partno, start_new=false, distance=60) {
 //   will adjust the `$tags_shown` variable and _only_ that part will be modeled in-scene. This is a
 //   reimplementation of how `show_only()` works, but without having to place `show_only()` somewhere in the hierarchy.
 //   .
-//   The changes were kept to an absolute minimum; BOSL2's `attach()` is otherwise as-is, as of 
+//   The changes were kept to an absolute minimum; BOSL2's `attach()` functionality is otherwise as-is, as of 
 //   2025-02-13. 
-//   At the time of this writing, 
-//   the `attach()` module used as a base is from BOSL2 circa 2025-02-13 (it is still pre-release, 
-//   and the version string within BOSL2's versions.scad isn't being kept up to date).
 //   .
 //   You'll need to review the documentation for `attach()` for a full understanding of how attachments work;
 //   explaining this is outside the scope of the `partno_attach()` documentation. You'll also need to review 
@@ -401,7 +398,7 @@ module partno(partno, start_new=false, distance=60) {
 //   shiftout = Shift an inside object outward so that it overlaps all the aligned faces.  Default: 0
 //   spin = Amount to rotate the parent around the axis of the parent anchor.  Can set to "align" to align the child's BACK with the parent aligned edge.  (Only permitted in 3D.)
 //   partno = A string to append to the current part numbers. No default. 
-//   start_new = A boolean which, if set to `true`, clears previous part numbers from the hirearchy before applying `val`. Default: `false`
+//   start_new = A boolean which, if set to `true`, clears previous part numbers from the hirearchy before applying `partno`. Default: `false`
 //   distance = When parting out, use `distance` to specify how far away to place attached elements. Default: `60`
 //
 // Side Effects:
@@ -1131,11 +1128,11 @@ function anno_list_to_block(list) = [
 
 
 
-/// Function: partno2translate()
+/// Function: anno_partno_translate()
 /// Synopsis: Transform an annotation part-number to a 3D point for positioning
 /// Usage:
-///   xyz_offset = partno2translate();
-///   xyz_offset = partno2translate(<d=30>);
+///   xyz_offset = anno_partno_translate();
+///   xyz_offset = anno_partno_translate(<d=30>);
 /// Description:
 ///   Provide a translatable set of XYZ coordinates. 
 ///   Position selection is obtained from the actively 
@@ -1146,7 +1143,7 @@ function anno_list_to_block(list) = [
 ///   The sequence is used to create a positional offset.
 /// Arguments:
 ///   ---
-///   d = Value used for distancing individual steps of movement. Default: `30`
+///   d = Value used for distancing individual steps of movement. Default: `50`
 ///
 function anno_partno_translate(d=50, vectors=[]) =
     let(
