@@ -216,7 +216,7 @@ module desc(name) {
 // Arguments:
 //   partno = A string to append to the current part numbers. 
 //   start_new = A boolean which, if set to `true`, clears previous part numbers from the hirearchy before applying `partno`. Default: `false`
-//   distance = When parting out, use `distance` to specify how far away to place attached elements. Default: `60`
+//   distance = When parting out, use `distance` to specify how far each step away from their origin to place elements. Default: `15`
 //
 // Continues:
 //   **Parting out:** Part-numbers have a second use, in addition to providing annotation markings for models: `partno()` 
@@ -227,7 +227,10 @@ module desc(name) {
 //   Part expansion applies to the entire scene, by setting `EXPAND_PARTS` within the .scad file to `true`.
 //   When `EXPAND_PARTS` is set to `true`, calls to `partno()` will translate its children to a 
 //   new position in the scene. The position is derived *from* the part-number, and should reasonably
-//   relocate deliniated parts via `move()` so that inspection or construction is eased. 
+//   relocate deliniated parts via `move()` so that inspection or construction is eased. The `distance` 
+//   argument controls how far each step away from a part's origin to move the part; the number of steps 
+//   is derived in part by how many part number sequences there are (so, part `1-1` would probably be closer to 
+//   the part's origin than `1-1-1-1-1` would be).
 //   
 //
 // Example: simple `partno()` use: the cube is part number `1`, and is annotated to show that:
@@ -318,7 +321,7 @@ module desc(name) {
 //                  annotate(show="ALL");
 //        }
 //
-module partno(partno, start_new=false, distance=60) {
+module partno(partno, start_new=false, distance=15) {
     req_children($children);
 
     $_anno_partno = anno_partno_attach_partno_or_idx(partno, start_new=start_new);
@@ -658,7 +661,7 @@ module partno_attach(parent, child, overlap, align, spin=0, norot, inset=0, shif
 
             // ## conditionally attach the annotation extension lines 
             // to the specified anchor. 
-            if ((EXPAND_PARTS || $_EXPAND_PARTS) && ok_to_annotate())
+            if (!HIGHLIGHT_PART && (EXPAND_PARTS || $_EXPAND_PARTS) && ok_to_annotate())
                 attach(anchor)
                     anno_dashed_line(partno_t_offset, anchor=TOP);
         }
@@ -1145,7 +1148,7 @@ function anno_list_to_block(list) = [
 ///   ---
 ///   d = Value used for distancing individual steps of movement. Default: `50`
 ///
-function anno_partno_translate(d=50, vectors=[]) =
+function anno_partno_translate(d=15, vectors=[]) =
     let(
         vec = (len(vectors) > 0)
             ? vectors
@@ -1153,7 +1156,8 @@ function anno_partno_translate(d=50, vectors=[]) =
     ) 
     assert(len(vec) > 0)
     let(
-        u = vec[0] * d,
+        off = vec[0] * d,
+        u = off - (off * min([1, $t])),
         v = (len(vec) > 1)
             ? move(u, p=anno_partno_translate(d=d, vectors=select(vec, 1, -1)))
             : move(u, p=CENTER)
