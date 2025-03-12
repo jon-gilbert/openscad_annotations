@@ -94,9 +94,11 @@ $_anno_obj_measure = [[],[]];
 //   The modules in this section do the first step: they apply the notes and annotation to child shapes and models, to be 
 //   rendered into an annotation in the next step.
 //
-// Module: label()
-// Synopsis: Apply a label annotation to a hierarchy of children modules
-// Usage:
+// Function&Module: label()
+// Synopsis: Return or apply a label annotation to a hierarchy of children modules
+// Usage: as a function:
+//   str = label();
+// Usage: as a module:
 //   label(name) [CHILDREN];
 // Description:
 //   Applies `name` as a label. A label is a simple, discrete name useful in directions or 
@@ -106,13 +108,15 @@ $_anno_obj_measure = [[],[]];
 //   Label assignment is hierarchical, in that all children beneath the `label()` call will 
 //   have the same label. Label assignment is singular, in that there is only ever 
 //   one label assigned to a 3D element when annotated. 
+//   .
+//   When invoked as a function, `label()` returns the current hierarchical label `str`.
 // 
 // Arguments:
 //   name = A string to set as the label for all child elements. 
 //
 // Continues: 
-//   Calling `label()` with no `name` argument clears the presence of a label annotation 
-//   for subsequent children.
+//   Invoking `label()` as a module with no `name` argument clears the presence of a label annotation 
+//   for subsequent children. Invoking `label()` as a function with a `name` argument makes no changes.
 //
 // Example: assigning a label: the cuboid is assigned label "A", and when annotated, that label appears:
 //   label("A")
@@ -143,18 +147,22 @@ $_anno_obj_measure = [[],[]];
 //         }
 //     }
 //
+function label(name=undef) = $_anno_labelname;
+
 module label(name) {
     req_children($children);
     $_anno_labelname = name;
     children();
 }
 
-// Module: desc()
-// Synopsis: Apply a description annotation to a hierarchy of children modules
-// Usage:
-//   desc(name) [CHILDREN];
+// Function&Module: desc()
+// Synopsis: Return or apply a description annotation to a hierarchy of children modules
+// Usage: as a function:
+//   str = desc();
+// Usage: as a module:
+//   desc(desc) [CHILDREN];
 // Description:
-//   Applies `name` as a description. A description is additional context, a few short words.
+//   Applies `desc` as a description. A description is additional context, a few short words.
 //   .
 //   Descriptions are hierarchical, in that all children beneath the `desc()` call will 
 //   have the same description. Description assignment is singular, in that there is only ever 
@@ -166,13 +174,15 @@ module label(name) {
 //   context to the model part, alongside the label, part-number, specification, and object
 //   details. Using `desc()` allows context to be created within models without forcing 
 //   an `annotate()` call in the model. 
+//   .
+//   When invoked as a function, `desc()` returns the current hierarchical description `str`.
 // 
 // Arguments:
-//   name = A string to set as the desc for all child elements. 
+//   desc = A string to set as the desc for all child elements. 
 //
 // Continues: 
-//   Calling `desc()` with no `name` argument clears the presence of a label annotation 
-//   for subsequent children.
+//   Invoking `desc()` as a module with no `desc` argument clears the presence of a label annotation 
+//   for subsequent children. Invoking `desc()` as a function with a `desc` argument makes no changes.
 //
 // Example: assigning a description:
 //   desc("A very special cuboid")
@@ -193,27 +203,33 @@ module label(name) {
 //     cuboid(10) 
 //       annotate("Not such a great cube, actually", show=["desc"]);
 //
-module desc(name) {
+function desc(desc=undef) = $_anno_desc;
+
+module desc(desc) {
     req_children($children);
-    $_anno_desc = name;
+    $_anno_desc = desc;
     children();
 }
 
 
-// Module: spec()
-// Synopsis: Apply a specification annotation to a hierarchy of children modules
-// Usage:
+// Function&Module: spec()
+// Synopsis: Return or apply a specification annotation to a hierarchy of children modules
+// Usage: as a function:
+//   list = spec();
+// Usage: as a module:
 //   spec(list) [CHILDREN];
 // Description:
 //   Applies given `list` as a series of `[key, value]` pair specifications to all children hirearchially beneath the `spec()` call. 
 //   When annotated, the specification will have its pairs displayed in a *key=value* layout. 
+//   .
+//   When invoked as a function, `spec()` returns the current specification `list`.
 //
 // Arguments:
 //   list = A list of specifications. Specifications are *assumed* to be lists, of the `[key, value]` format. 
 // 
 // Continues:
-//   Calling `spec()` with no `list` argument clears the presensce of the specification annotation for all 
-//   subsequent children.
+//   Invoking `spec()` as a module with no `list` argument clears the presensce of the specification annotation for all 
+//   subsequent children. Invoking `spec()` as a function with a `list` argument makes no changes.
 // 
 // Todo:
 //   Currently, `spec()` and `obj()` conflict with each other, and until that gets resolved, don't use them both on the same annotation.
@@ -232,6 +248,8 @@ module desc(name) {
 //    cuboid([10, 20, 8], anchor=CENTER)
 //      annotate(show=["spec"]);
 // 
+function spec(list=undef) = $_anno_spec;
+
 module spec(list) {
     req_children($children);
     $_anno_spec = list;
@@ -239,15 +257,21 @@ module spec(list) {
 }
 
 
-// Module: obj()
+// Function&Module: obj()
 // Synopsis: Apply an Object annotation to a hierarchy of children modules
-// Usage:
+// Usage: as a function:
+//   object = obj();
+// Usage: as a module:
 //   obj(object) [CHILDREN];
 // Description:
 //   Applies given `object` as a model specification to all children hirearchically beneath the `obj()` call. 
 //   When annotated, the object will have its attributes and values displayed in a *key=value* layout. 
 //   .
-//   A openscad_object Object of any type can be used.
+//   When invoked as a function, `obj()` returns the current hierarchical object `object`.
+//   .
+//   A openscad_object Object of any type can be used. You'll want to review 
+//   [the documentation on Objects](https://github.com/jon-gilbert/openscad_objects/wiki) for 
+//   more information on how these work.
 //
 // Arguments:
 //   object = An object of any type. 
@@ -256,13 +280,15 @@ module spec(list) {
 //   Object modules *should* call `obj()` with their own object entries immediately before calling `attachable()`, 
 //   to prevent accidental hierarchical transfer of objects when it's not desired. 
 //   .
-//   Calling `obj()` with no `object` argument clears the presence of the object annotation 
-//   for subsequent children.
+//   Invoking `obj()` as a module with no `object` argument clears the presence of the object annotation 
+//   for subsequent children. Invoking `obj()` as a function with an `object` argument makes no changes.
 //
 // Todo:
 //   Double-check that `spec()` and `obj()` no longer conflict with each other
 //   `obj()` example documentation is lacking
 //
+function obj(obj=undef, dimensions=undef, flyouts=undef) = $_anno_obj;
+
 module obj(obj=[], dimensions=[], flyouts=[]) {
     req_children($children);
     log_info_if(( !_defined(obj) && !_defined(dimensions) && !_defined(flyouts) ), 
@@ -1168,11 +1194,11 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
 
     // build an Annotation object with what we know from scope-specific variables passed down to us:
     anno = Annotation([
-            "label",  _first([label,  $_anno_labelname]),
-            "partno", _first([partno, $_anno_partno]),
-            "spec",   _first([spec,   $_anno_spec]),
-            "obj",    _first([obj,    $_anno_obj]),
-            "desc",   _first([desc,   $_anno_desc]),
+            "label",  _first([label,  label()]),
+            "partno", _first([partno, partno()]),
+            "spec",   _first([spec,   spec()]),
+            "obj",    _first([obj,    obj()]),
+            "desc",   _first([desc,   desc()]),
             "color",  color,
             "alpha",  alpha,
             "leader_len", leader_len
@@ -1193,24 +1219,19 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
         // a tuple of: [ text-or-list-to-model,  size-of-text ]
         text_sections = list_remove_values([
             (in_list("label", blocks))
-                ? [ [anno_label(anno)], 
-                    anno_size_for_attr("label"), ] 
+                ? [[anno_label(anno)], anno_size_for_attr("label")] 
                 : undef,
             (in_list("partno", blocks))
-                ? [ [partno(anno)], 
-                    anno_size_for_attr("partno"),] 
+                ? [[anno_partno(anno)], anno_size_for_attr("partno")] 
                 : undef,
             (in_list("desc", blocks))
-                ? [ [anno_desc(anno)], 
-                    anno_size_for_attr("desc"),] 
+                ? [[anno_desc(anno)], anno_size_for_attr("desc")] 
                 : undef,
             (in_list("spec", blocks))
-                ? [ anno_list_to_block(anno_spec(anno)), 
-                    anno_size_for_attr("spec"),] 
+                ? [anno_list_to_block(anno_spec(anno)), anno_size_for_attr("spec")] 
                 : undef,
             (in_list("obj", blocks))
-                ? [ anno_obj_to_block(anno_obj(anno)), 
-                    anno_size_for_attr("obj"),] 
+                ? [anno_obj_to_block(anno_obj(anno)), anno_size_for_attr("obj")] 
                 : undef
             ], undef, all=true);
 
@@ -1606,8 +1627,8 @@ function Annotation(vlist=[], mutate=[]) =
         o_ = Object("Annotation", Annotation_attrs, vlist=vlist, mutate=mutate),
         vl = [
             "mech_number", obj_accessor_get(o_, "mech_number", default=((!MECH_NUMBER) ? undef : MECH_NUMBER)),
-            "label",       obj_accessor_get(o_, "label",       default=$_anno_labelname),
-            "partno",      obj_accessor_get(o_, "partno",      default=$_anno_partno),
+            "label",       obj_accessor_get(o_, "label",       default=label()),
+            "partno",      obj_accessor_get(o_, "partno",      default=partno()),
         ]
     )
     Object("Annotation", Annotation_attrs, vlist=vl, mutate=o_);
