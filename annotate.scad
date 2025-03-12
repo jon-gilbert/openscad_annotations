@@ -86,7 +86,7 @@ $_anno_obj_measure = [[],[]];
 
 
 
-// Section: Modules that Apply Annotations to Models
+// Section: Applying Annotations to Shapes and Modules
 //   Labeling and describing shapes and models with Annotations happens in two steps. The first step applies the annotation, 
 //   be it a simple label ("tab-A"), a descriptive block of text ("fits into slot B"), a part-number ("A-001-X"), or 
 //   whatever; the second step produces the in-scene textual elements applied to the shape, the actual act of annotation.
@@ -273,19 +273,29 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 }
 
 
-// Section: Parting Out Modules
-//   Specifying part numbers for models works roughly the same as 
-//   labels and descriptions, in that a module sets a value for the 
-//   hierarchy underneath it. What differes is that part numbers allow 
-//   parts of models to be arranged apart from each other to ease 
+// Section: Annotating Part Numbers, and Parting Out Modules
+//   A part-number is an identifier for discrete sub-sections of a model. Part-numbers are 
+//   hirearchical and cumulatively collected, implying a chain of parentage. Specifying part 
+//   numbers for models works roughly the same as labels and descriptions, in that a module 
+//   sets a value for the hierarchy underneath it. What differes is that part numbers stack 
+//   hierarchically, and allow parts of models to be arranged apart from each other to ease 
 //   inspection of complex pieces. 
-//   .
-//   When annotated, the elements in the list of part-numbers are collected with a hyphen (`-`) at the 
-//   specified level.
-//   .
-//   A fully-collected part-number has the following format: 
+// Figure(3D,NoAxes,NoScales): A relatively simple-complex model with individually-parted models within it: a plate with a hole, in which a screw with a nut is inserted. In the scene, neither the screw's nut, nor the plate's hole, can be easily examined.
+//   include <BOSL2/screws.scad>
+//   partno(1)
+//    diff()
+//      cuboid([20, 20, 3])
+//        tag("remove") attach(CENTER) cyl(d=5, h=4);
+//   partno(2)
+//    screw("M5,8", thread_len=5, head="button", drive="torx", anchor="shank_center")
+//       partno_attach(BOTTOM, overlap=5, partno=1)
+//         nut("M5");
+//
+// Continues:
+//   A fully-collected part-number has a mechanical number, an optional label, and one or more part numbers, 
+//   all separated with hyphens. It's akin to the following format: 
 //   ```
-//   partno = mech-number, sep, [ label, sep ], part-number, sep, { part-number, sep } ;
+//   partno = mech-number, [ sep, label ], sep, part-number, { sep, part-number } ;
 //   sep = "-" ;
 //   chars = a .. z, A .. Z, 0 .. 9, _ ;
 //   mech-number = { chars } ;
@@ -296,16 +306,51 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //   .
 //   Part-numbers are predicated on the existance of `MECH_NUMBER`, that uniquely identifies the entire
 //   mechanism being modeled (eg, `002`). *(OpenSCAD doesn't offer the facility to query the filename 
-//   being operated on for reasons beyond knowing, and this variable must be set somehow.)* Ideally 
+//   being operated on for reasons beyond knowing, and this variable must be set somehow.) Ideally 
 //   the `MECH_NUMBER` value is set in your model just after where `openscad_annotations/annotate.scad` is included.)*
+//   .
+//   When annotated, a model or shape with a part-number assigned will have the part-number in-scene as a flyout to the respective 
+//   model.
+// Figure(3D,NoAxes,NoScales): The model above, but with its part numbers annotated:
+//   include <BOSL2/screws.scad>
+//   partno(1)
+//    diff()
+//      cuboid([20, 20, 3]) {
+//        annotate(show=["partno"], anchor=BACK);
+//        tag("remove") attach(CENTER) cyl(d=5, h=4);
+//        }
+//   partno(2)
+//    screw("M5,8", thread_len=5, head="button", drive="torx", anchor="shank_center") {
+//       annotate(show=["partno"]);
+//       partno_attach(BOTTOM, TOP, overlap=5, partno=1)
+//         nut("M5")
+//           annotate(show=["partno"]);
+//    }
+//
+// Continues:
 //   .
 //   **Parting out:** Both `partno()` and `partno_attach()` below provide 
 //   a deliniation of parts within the model. Parts within the model that are delineated 
 //   can be automatically expanded, parted-out, for examination or construction. This is especially 
 //   useful for visualizing the internal aspects of models with that have moving parts not easily seen.
+//   The distances between parts is adjusted by the current value of `$t`, and animating the scene
+//   within OpenSCAD will produce parts that coalesce into place over time.
 //   .
 //   Part expansion applies to the entire scene, by setting `EXPAND_PARTS` within the .scad file to `true`;
 //   or within a partial subset of the scene by using `expand_parts()`.
+// Figure(3D,NoAxes,NoScales): The above example model, but with part expansion enabled:
+//   include <BOSL2/screws.scad>
+//   EXPAND_PARTS = true;
+//   partno(1)
+//    diff()
+//      cuboid([20, 20, 3])
+//        tag("remove") attach(CENTER) cyl(d=5, h=4);
+//   partno(2)
+//    screw("M5,8", thread_len=5, head="button", drive="torx", anchor="shank_center")
+//       partno_attach(BOTTOM, overlap=5, partno=1)
+//         nut("M5");
+//
+// Continues:
 //   .
 //   **Highlighting Parts:** Individual parts can be isolated and selectively displayed by setting
 //   the `HIGHLIGHT_PART` global variable, or by calling the `highlight_part()` module somewhere in the 
@@ -314,18 +359,33 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //   If you're unsure what parts are available for highlighting, or if you're running openscad 
 //   non-interactively, you can set `LIST_PARTS` to `true`: it will emit all the parts found 
 //   as it produces the scene to STDOUT (or to the console, if run within the GUI). 
+// Figure(3D,NoAxes,NoScales): The above example model again, but this time with only part `EX-2` (the screw) shown:
+//   include <BOSL2/screws.scad>
+//   HIGHLIGHT_PART = "EX-2";
+//   partno(1)
+//    diff()
+//      cuboid([20, 20, 3])
+//        tag("remove") attach(CENTER) cyl(d=5, h=4);
+//   partno(2)
+//    screw("M5,8", thread_len=5, head="button", drive="torx", anchor="shank_center")
+//       partno_attach(BOTTOM, overlap=5, partno=1)
+//         nut("M5");
 //
 //
-// Module: partno()
-// Synopsis: Apply a part-number annotation to a hierarchy of children modules
-// Usage:
+// Function&Module: partno()
+// Synopsis: Return or apply a part-number annotation to a hierarchy of children modules
+// Usage: as a function:
+//   partno_str = partno();
+//   partno_lst = partno(as_string=false);
+// Usage: as a module:
 //   partno(partno) [CHILDREN];
 // Description:
-//   Appends string `partno` to existing part-numbers. A part-number is an identifier for discrete sub-sections of 
-//   a model.
+//   When invoked as a function, `partno()` returns the current active part-number string `partno_str` 
+//   from the child hierarchy. When the option `as_string` is set to `false`, the value returned is 
+//   a list of all the part number elements `partno_lst`.
 //   .
-//   Appends `partno` to existing part-numbers to all children hirearchically beneath the `partno()` call. 
-//   Part-numbers are hirearchical and cumulatively collected, implying a chain of parentage. 
+//   When invoked as a module, `partno()` sets or extends the model's part-numbers by appending
+//   `partno` to the existing part-numbers to all children hirearchically beneath the `partno()` call. 
 //   Calling `partno()` multiple times in a child hirearchy will add each call's `partno` to the part-number 
 //   element list. 
 //   .
@@ -339,19 +399,44 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //   When `LIST_PARTS` is set to `true`, `partno()` will emit part numbers to the console, or to STDOUT, as 
 //   it is called throughout the hirearchy. 
 //
-// Arguments:
+// Arguments: when invoked as a function:
+//   ---
+//   as_string = A boolean flag that, when set, instructs `partno()` to return the part number as a string. Default: `true`
+//
+// Arguments: when invoked as a module:
 //   partno = A string to append to the current part numbers. 
 //   start_new = A boolean which, if set to `true`, clears previous part numbers from the hirearchy before applying `partno`. Default: `false`
-//   distance = When parting out, use `distance` to specify how far each step away from their origin to place elements. Default: `15`
+//   distance = When parting out, use `distance` to specify how far each step away from their origin to place elements. Default: `20`
 //
 // Continues:
+//   It is an error to invoke `partno()` as a function with any of the module-specific arguments; and, it is an 
+//   error to invoke `partno()` as a module with any of the function-specific arguments.
+//   .
 //   There is no way for `partno()` to be aware of duplicate part numbers; and, there is every possibility that 
 //   modules' echos will be called multiple times; therefore when using `LIST_PARTS`-triggered part listings, you  
 //   will probably want to de-duplicate part numbers before programmatically iterating through them.
 //
 // See Also: partno_attach(), expand_parts(), collapse_parts(), highlight_part()
 //
-// Example: simple `partno()` use: the cube is part number `1`, and is annotated to show that:
+// Example(NORENDER): setting a chain of part-numbers, and then echoing it to the console:
+//   partno(1)
+//    partno(1)
+//     partno(2)
+//      partno("4a")
+//       partno(5)
+//        echo(partno());
+//   // yields: ECHO: "EX-1-1-2-4a-5"
+//
+// Example(NORENDER): setting a chain of part-numbers, resetting it in the middle, and then echoing it to the console as a list, not a string:
+//   partno(1)
+//    partno(1)
+//     partno(2)
+//      partno("4a", start_new=true)
+//       partno(5)
+//        echo(partno(as_string=false));
+//   // yields: ECHO: ["EX", "4a", 5]
+//
+// Example: a simple `partno()` module example: the cube is part number `1`, and is annotated to show the same:
 //   partno(1)
 //     cuboid(30)
 //       annotate(show=["partno"]);
@@ -439,22 +524,29 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //                  annotate(show="ALL");
 //        }
 //
-module partno(partno, start_new=false, distance=20) {
+function partno(partno=undef, start_new=undef, distance=undef, anno=Annotation(), as_string=true) =
+    let(
+        _ = log_error_if((_defined(partno) || _defined(start_new) || _defined(distance)), 
+            "When invoked as a function, partno() does not accept the `partno`, `start_new`, or `distance` arguments"),
+        partno_list = anno_partno_list()
+    )
+    (as_string)
+        ? str_join(partno_list, "-")
+        : partno_list;
+
+module partno(partno, start_new=false, distance=20, anno=undef, as_string=undef) {
+    log_error_if((_defined(as_string) || _defined(anno)),
+        "When invoked as a module, partno() does not accept the `as_string` argument");
     req_children($children);
-
     $_anno_partno = anno_partno_attach_partno_or_idx(partno, start_new=start_new);
-
-    partno_str = anno_partno_str();
-
     if (LIST_PARTS)
-        echo(str("PART:", partno_str));
-
-    trans_vector = (expand_parts())
-        ? anno_partno_translate(d=distance)
-        : [0,0,0];
-
-   move(trans_vector)
+        echo(str("PART:", partno()));
+    if (expand_parts()) {
+        move(anno_partno_translate(d=distance))
+            children();
+    } else {
         children();
+    }
 }
 
 
@@ -463,42 +555,46 @@ module partno(partno, start_new=false, distance=20) {
 // Usage:
 //   [ATTACHABLE] partno_attach([attach args...], <partno=undef>, <start_new=false>, <distance=20>) [CHILDREN];
 // Description:
-//   Combines the functionality of BOSL2's `attach()` and `partno()`. 
+//   `partno_attach()` combines the functionality of BOSL2's `attach()` and openscad_annotation's `partno()`. 
+//   Individual models are attached to each other as normal, and in the same attach call can be assigned 
+//   part numbers. When modeling two functionally distinct shapes (say, two gears) together, `partno_attach()` 
+//   gives you the attachability of the pieces, while later making it easy to separate for examination, 
+//   annotation, slicing, whatever. 
 //   .
-//   This module differs from `attach()` in the following ways:
+//   The `partno_attach()` module differs from `attach()` in the following specific four ways:
 //   .
 //   1. part-number assignent: when the `partno` argument is set to something, that value (a number or string) will be 
-//   appended to the sequence of part numbering in the current hierarchy. If annotated with `annotate()`, 
-//   the part number for that model will be displayed as a flyout. For multiple parental anchors, 
-//   using the literal `"idx"` as a `partno` will tell `partno_attach()` to use the internally 
-//   generated `$idx` as the partno. 
+//   appended to the sequence of part numbering in the current hierarchy, as `partno()` does.
+//   When parent anchors are specified as multiple vectors, using the literal `"idx"` as a `partno` will tell `partno_attach()` to use the internally 
+//   generated `$idx` as the partno (but see the caveats below).
 //   .
-//   2. `EXPAND_PARTS` implementation: if the `EXPAND_PARTS` global is set to `true`, `partno_attach()` will place 
+//   2. part expansion: if the `EXPAND_PARTS` global is set to `true`, `partno_attach()` will place 
 //   models `distance` length away from their parents' attachment points. Unlike `partno()` which 
 //   flings parts in a determinstic but unstructured direction, this relocation is determined by 
 //   the attachment points. The distances are 
 //   `$t`-time modified to space models away from their parents; if animated, the parts will 
-//   move towards their attachments. A connecting dashed line between models will be displayed, 
-//   showing where children are meant to meet up with their parents.
+//   move towards their attachments. 
+//   Because attachments are specific vectors between the parent and child, `partno_attach()` can describe
+//   that connection with a dashed line between the parted models; unlike `partno()`, a visual relationship
+//   of how the child connects to the parent is made obvious.
 //   .
-//   3. `LIST_PARTS` implementation: if the `LIST_PARTS` global is set to `true`, `partno_attach()` will 
+//   3. part listing: if the `LIST_PARTS` global is set to `true`, `partno_attach()` will 
 //   emit part numbers to the console as it finds them. If run from the command-line non-interactively, 
-//   the part numbers will be emitted to STDOUT. Note that part numbers are emitted whether or not the 
+//   the part numbers will be emitted to STDOUT. Part numbers are emitted whether or not the 
 //   child is modeled in-scene.
 //   .
-//   4. `HIGHLIGHT_PART` implemented: if `HIGHLIGHT_PART` is set to a partno-string value, `partno_attach()` 
-//   will adjust the `$tags_shown` variable and _only_ that part will be modeled in-scene. This is a
-//   contingent on a re-implemention of the `_is_shown()` function, and it happens within the 
-//   model's `attachable()` call. 
-//   This is similar to how `show_only()` works, but without conflicting with BOSL2 tags, or having to 
-//   place `show_only()` somewhere in the hierarchy.
+//   4. singular part highlighting: if `HIGHLIGHT_PART` is set to a partno-string value, `partno_attach()` 
+//   works with `attachable()` to _only_ that part will be modeled in-scene. This is 
+//   contingent on a re-implemention of the `_is_shown()` function, which is queried within `attachable()`.
+//   The result is similar to how `show_only()` works, but without conflicting with BOSL2's tags functions.
 //   .
 //   The changes were kept to an absolute minimum; BOSL2's `attach()` functionality is otherwise as-is, as of 
-//   2025-02-13. 
-//   .
-//   You'll need to review the documentation for `attach()` for a full understanding of how attachments work;
-//   explaining this is outside the scope of the `partno_attach()` documentation. You'll also need to review 
-//   the documentation for `partno()` for a full understanding of how part numbers are assigned and displayed.
+//   2025-02-13. You'll need to review the 
+//   [documentation for `attach()`](https://github.com/BelfrySCAD/BOSL2/wiki/attachments.scad#module-attach) 
+//   as well as [the Attachments tutorial](https://github.com/BelfrySCAD/BOSL2/wiki/Tutorial-Attachments)
+//   for a full understanding of how attachments work;
+//   explaining this is outside the scope of the `partno_attach()` documentation here. You'll also need to review 
+//   the documentation for `partno()` above for a full understanding of how part numbers are assigned and displayed.
 //
 // Arguments:
 //   parent = The parent anchor point to attach to or a list of parent anchor points.
@@ -527,19 +623,19 @@ module partno(partno, start_new=false, distance=20) {
 //
 // Continues:
 //   Note that because `partno_attach()` can process and apply multiple parental anchors, it can behave like a 
-//   BOSL2 distributor, scattering multiple identical children to various anchors on the parent. Each of 
+//   BOSL2 distributor, attaching multiple identical children to various anchors on the parent. Each of 
 //   those distributed model copies is assigned an index via a `$idx` scoped variable. `partno_attach()`
-//   uses a `partno` of `"idx"` as the signal to use `$idx` as the new part-number value. Note that this
-//   precludes the future ability to use the literal string `"idx"` as a part number element, and I'm
-//   OK with that.
+//   recognizes a `partno` of `"idx"` as the signal to use `$idx` as the new part-number value. Naturally, this
+//   precludes the future ability to use the literal string `"idx"` as a part number element (which is 
+//   a trade-off that I'm OK with).
 //   .
-//   There is no way for `partno_attach()` to be aware of duplicate part numbers; and, there is every possibility that 
+//   Note also there is no way for `partno_attach()` to be aware of duplicate part numbers; and, there is every possibility that 
 //   modules' echos will be called multiple times; therefore when using `LIST_PARTS`-triggered part listings, you  
 //   will probably want to de-duplicate part numbers before programmatically iterating through them.
 //
 // See Also: partno(), expand_parts(), collapse_parts(), highlight_part()
 //
-// Example(3D): `partno()`'s Example 2, above, but with using `partno_attach()`: a hirearchical part-number use, showing inheritance of the part-numbers within a tree:
+// Example(3D): `partno()`'s Example 4, above, but with using `partno_attach()`: a hirearchical part-number use, showing inheritance of the part-numbers within a tree:
 //   partno(30)
 //     cuboid(30) {
 //       annotate(show=["partno"]);
@@ -552,7 +648,7 @@ module partno(partno, start_new=false, distance=20) {
 //         }
 //     }
 //
-// Example(3D): `partno()`'s Example 6, above, but with `partno_attach()`: using `$idx` as a value doesn't work with `partno_attach()` (because at the time of invocation, `$idx` isn't set correctly), but you *can* use the literal string `"idx"` as a value, and `partno_attach()` will do the right thing. This works in a distributor, and also when specifying multiple attachable anchor points in a single attach call:
+// Example(3D): `partno()`'s Example 8, above, but with `partno_attach()`: using `$idx` as a value doesn't work with `partno_attach()` (because at the time of invocation, `$idx` isn't set correctly), but you *can* use the literal string `"idx"` as a value, and `partno_attach()` will do the right thing. This works in a distributor, and also when specifying multiple attachable anchor points in a single attach call:
 //   partno(1)
 //     cuboid(30)
 //       partno_attach([TOP,BOTTOM,LEFT,RIGHT,FWD,BACK], BOTTOM, partno="idx")
@@ -730,7 +826,7 @@ module partno_attach(parent, child, overlap, align, spin=0, norot, inset=0, shif
             // ## 4 ## anno_partno: establish the partno for the upcoming part. This may 
             // involve the $idx value, so we cannot do that until we reach this point.
             $_anno_partno = anno_partno_attach_partno_or_idx(partno, $idx, start_new);
-            partno_str = anno_partno_str();
+            partno_str = partno();
 
             // ## 5 ## LIST_PARTS: conditionally emit the full partno here to the console if 
             // the LIST_PARTS global is true
@@ -802,11 +898,11 @@ function _is_shown() =
 ///   partno_str = The part-number string to examine (eg, `010-A-1-1`). If unspecified, the current part-number is derived from the hierarchy.
 ///   highlighted_part = The part number string to compare against. If unspecitied, the current value from `highlighted_part()` will be used.
 /// See Also: partno(), partno_attach()
-function anno_partno_is_shown(partno_str=anno_partno_str(), highlighted_part=highlight_part()) =
+function anno_partno_is_shown(partno_str=partno(), highlighted_part=highlight_part()) =
     assert(is_string(partno_str), str("Part-number (",partno_str,") is not a string")) 
     assert(is_string(highlighted_part) || is_undef(highlighted_part), str("Highlighted part-number (",highlighted_part,") is not a string")) 
     let(
-        allowed = defined(highlighted_part)
+        allowed = _defined(highlighted_part)
             ? partno_str == highlighted_part
             : true
     )
@@ -883,7 +979,7 @@ module collapse_parts() {
 // Arguments:
 //   pn = An optional part-number; if specified, will take precedence over the locally scoped and global values. Default: `undef`
 //
-function highlight_part(pn=undef) = first([pn, $_HIGHLIGHT_PART, HIGHLIGHT_PART]);
+function highlight_part(pn=undef) = _first([pn, $_HIGHLIGHT_PART, HIGHLIGHT_PART]);
     
 module highlight_part(partno=undef) {
     assert(is_string(partno) || is_undef(partno), str("Provided part-number '", partno, "' is not a string"));
@@ -938,7 +1034,7 @@ function anno_partno_attach_partno_or_idx(partno, idx=undef, start_new=false) =
 
 
 
-// Section: Annotating Modules
+// Section: Displaying Annotations onto Shapes and Models
 //   Labeling and describing shapes and models with Annotations happens in two steps. The first step applies the annotation; 
 //   the second step produces the in-scene textual elements applied to the shape, the actual act of annotation, where the 
 //   various labels and tags are assembled into a flyout that provides context to the viewer as to what exactly they're 
@@ -1052,7 +1148,7 @@ function anno_partno_attach_partno_or_idx(partno, idx=undef, start_new=false) =
 // Todo:
 //    gotta document behavior on orientation vs rotation with flyouts.
 //    The default of blocks to be shown should be "ALL", and `show` should exist to *limit* what is shown.
-//    obj() documentation is lacking, only because I don't feel like providing a mythical Object handler. 507common has the best examples, it'll be clearer in that repo.
+//    obj() documentation is lacking, only because I don't feel like providing a simulated Object handler. Literally any openscad_object Object will work with `annotate()`, and 507common has the best examples; when that repo is made public, I'll crib some from there to here.
 //
 module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef, obj=undef, anchor=RIGHT, color=undef, alpha=undef, leader_len=undef) {
     supported_annos = ["label", "partno", "spec", "obj", "desc"];
@@ -1101,7 +1197,7 @@ module annotate(desc, show=["label", "desc"], label=undef, partno=[], spec=undef
                     anno_size_for_attr("label"), ] 
                 : undef,
             (in_list("partno", blocks))
-                ? [ [anno_partno_str(anno)], 
+                ? [ [partno(anno)], 
                     anno_size_for_attr("partno"),] 
                 : undef,
             (in_list("desc", blocks))
@@ -1163,24 +1259,6 @@ function anno_partno_list(anno=Annotation(), mech_number=true, label=true) =
         ])
     )
     list_remove_values(apl, undef, all=true);
-
-/// Function: anno_partno_str()
-/// Synopsis: Return the current partno as a string
-/// Usage:
-///   str = anno_partno_str();
-///   str = anno_partno_str(<anno=Annotation object>, <mech_number=true>, <label=true>);
-/// Description:
-///   Returns the current part number as a single string `str`. 
-///   If an explicit Annotation object is passed via the `anno` argument, 
-///   `anno_partno_str()` will use that object instead of gleaning the 
-///   current Annotation state from local- and dollar-sign-prefixed- variables. 
-///
-/// Arguments:
-///   anno = An Annotation object. If unspecified, a new Annotation object will be instantiated for `anno_partno_str()`.
-///   mech_number = If set to `true`, will include the mech number (if set) in the returned partno string. Default: `true`
-///   label = If set to `true`, will include the label number (if set) in the returned partno string. Default: `true`
-function anno_partno_str(anno=Annotation(), mech_number=true, label=true) = 
-    str_join(anno_partno_list(anno, mech_number, label), "-");
 
 
 /// Function: anno_active_block_headers()
