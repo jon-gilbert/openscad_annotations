@@ -905,7 +905,10 @@ function _is_shown() =
         shown  = $tags_shown=="ALL" || in_list($tag,$tags_shown),
         hidden = in_list($tag, $tags_hidden),
         // ## 1 ## obtain partno_shown: examine anno_partno_is_shown() for the test boolean:
-        partno_shown = anno_partno_is_shown()
+        partno_shown = anno_partno_is_shown(),
+        _ = echo( //log_debug_if((true || highlight_part() == partno()),
+            str([partno(), highlight_part(), shown, hidden, partno_shown])
+            )
     )
     // ## 2 ## modified test: the addition of `&& partno_shown` to the truth test:
     shown && !hidden && partno_shown;
@@ -1627,8 +1630,8 @@ function Annotation(vlist=[], mutate=[]) =
         o_ = Object("Annotation", Annotation_attrs, vlist=vlist, mutate=mutate),
         vl = [
             "mech_number", obj_accessor_get(o_, "mech_number", default=((!MECH_NUMBER) ? undef : MECH_NUMBER)),
-            "label",       obj_accessor_get(o_, "label",       default=label()),
-            "partno",      obj_accessor_get(o_, "partno",      default=partno()),
+            "label",       obj_accessor_get(o_, "label",       default=$_anno_labelname),
+            "partno",      obj_accessor_get(o_, "partno",      default=$_anno_partno),
         ]
     )
     Object("Annotation", Annotation_attrs, vlist=vl, mutate=o_);
