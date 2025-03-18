@@ -1161,7 +1161,7 @@ function anno_partno_attach_partno_or_idx(partno, idx=undef, start_new=false) =
 // Synopsis: Annotate a shape or model within scene
 // Usage:
 //   [ATTACHABLE] annotate();
-//   [ATTACHABLE] annotate(<desc>, <show=["label", "desc"]>, <anchor=RIGHT>, <label=undef>, <partno=undef>, <spec=undef>, <obj=undef>, <leader_len=30>, <color=undef>, <alpha=undef>);
+//   [ATTACHABLE] annotate(<description>, <show=["label", "desc"]>, <anchor=RIGHT>, <label=undef>, <partno=undef>, <spec=undef>, <obj=undef>, <leader_len=30>, <color=undef>, <alpha=undef>);
 //
 // Description:
 //   When called as a child to an attachable element, `annotate()` creates a flyout block of text 
@@ -1193,7 +1193,7 @@ function anno_partno_attach_partno_or_idx(partno, idx=undef, start_new=false) =
 //   Flyouts are constructed in the `color` color, with their transparency set with `alpha`. 
 //
 // Arguments:
-//   desc = An optional description that only applies to this annotation text block. No default. 
+//   description = An optional description that only applies to this annotation text block. No default. 
 //   ---
 //   show = A list of annotation types to display, if there is a value for them. Default: `["label", "desc"]`
 //   anchor = A named standard anchor **on the parent** to the `annotate()` call. Default: `RIGHT`
