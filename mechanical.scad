@@ -544,6 +544,7 @@ module mech_oscillatory(m, anchor=CENTER, spin=0, orient=UP) {
     mech_rotational(
         Mech([
                 "direction", ["cw", "ccw"],
+/*
                 "pivot_radius", mech_pivot_radius(m,
                                     default=path_length(
                                         path_from_center_to_vector(
@@ -552,6 +553,7 @@ module mech_oscillatory(m, anchor=CENTER, spin=0, orient=UP) {
                                             )
                                         )
                                     )
+*/
                 ],
             mutate=m
             ),
