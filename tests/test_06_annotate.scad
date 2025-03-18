@@ -85,20 +85,20 @@ module test_anno_partno_list() {
 test_anno_partno_list();
 
 
-module test_anno_partno_str() {
-    module t_anno_partno_str(expected) {
-        tv = anno_partno_str();
+module test_partno_retr() {
+    module t_partno(expected) {
+        tv = partno();
         assert(tv == expected,
             str(["got", tv, ", expected", expected]));
     }
-    partno(0)               t_anno_partno_str("0");
-    partno(1)   partno(1)   t_anno_partno_str("1-1");
-    partno("a")             t_anno_partno_str("a");
-    partno("a") partno("b") t_anno_partno_str("a-b");
-    partno(1)   partno("b") t_anno_partno_str("1-b");
-    partno("a") partno(1)   t_anno_partno_str("a-1");
+    partno(0)               t_partno("0");
+    partno(1)   partno(1)   t_partno("1-1");
+    partno("a")             t_partno("a");
+    partno("a") partno("b") t_partno("a-b");
+    partno(1)   partno("b") t_partno("1-b");
+    partno("a") partno(1)   t_partno("a-1");
 }
-test_anno_partno_str();
+test_partno_retr();
 
 
 module test_anno_partno_translate() {
