@@ -27,7 +27,7 @@ and separate copyright, as detailed below. Redistribution of openscad_annotation
 must include these licence and copyright details. 
 
 
-1. BOSL2 attach():
+1. BOSL2 attach(), _show_ghost():
 
 BSD 2-Clause License
 
