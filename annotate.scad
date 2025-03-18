@@ -36,16 +36,16 @@ MECH_NUMBER = false;
 EXPAND_PARTS = false;
 $_EXPAND_PARTS = false;
 
-/// Constant: HIGHLIGHT_PART
-/// Constant: $_HIGHLIGHT_PART
+/// Constant: ISOLATED_PART
+/// Constant: $_ISOLATED_PART
 /// Description:
 ///   A scalar value meant to hold a string representing a 
 ///   full part number. When set, only shapes with that 
 ///   part are meant to be shown in-scene. 
 ///   Currently: `undef`
 /// See Also: partno(), partno_attach(), _is_shown()
-HIGHLIGHT_PART = undef;
-$_HIGHLIGHT_PART = undef;
+ISOLATED_PART = undef;
+$_ISOLATED_PART = undef;
 
 /// Constant: LIST_PARTS
 /// Description:
@@ -379,15 +379,15 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 // Continues:
 //   .
 //   **Highlighting Parts:** Individual parts can be isolated and selectively displayed by setting
-//   the `HIGHLIGHT_PART` global variable, or by calling the `highlight_part()` module somewhere in the 
+//   the `ISOLATED_PART` global variable, or by calling the `isolated_part()` module somewhere in the 
 //   hirearchy. This will exclude all but the specified part number when producing models. 
 //   .
-//   If you're unsure what parts are available for highlighting, or if you're running openscad 
+//   If you're unsure what parts are available for isolating, or if you're running openscad 
 //   non-interactively, you can set `LIST_PARTS` to `true`: it will emit all the parts found 
 //   as it produces the scene to STDOUT (or to the console, if run within the GUI). 
 // Figure(3D,NoAxes,NoScales): The above example model again, but this time with only part `EX-2` (the screw) shown:
 //   include <BOSL2/screws.scad>
-//   HIGHLIGHT_PART = "EX-2";
+//   ISOLATED_PART = "EX-2";
 //   partno(1)
 //    diff()
 //      cuboid([20, 20, 3])
@@ -442,7 +442,7 @@ module obj(obj=[], dimensions=[], flyouts=[]) {
 //   modules' echos will be called multiple times; therefore when using `LIST_PARTS`-triggered part listings, you  
 //   will probably want to de-duplicate part numbers before programmatically iterating through them.
 //
-// See Also: partno_attach(), expand_parts(), collapse_parts(), highlight_part()
+// See Also: partno_attach(), expand_parts(), collapse_parts(), isolated_part()
 //
 // Example(NORENDER): setting a chain of part-numbers, and then echoing it to the console:
 //   partno(1)
@@ -609,7 +609,7 @@ module partno(partno, start_new=false, distance=20, anno=undef, as_string=undef)
 //   the part numbers will be emitted to STDOUT. Part numbers are emitted whether or not the 
 //   child is modeled in-scene.
 //   .
-//   4. singular part highlighting: if `HIGHLIGHT_PART` is set to a partno-string value, `partno_attach()` 
+//   4. singular part isolating: if `ISOLATED_PART` is set to a partno-string value, `partno_attach()` 
 //   works with `attachable()` to _only_ that part will be modeled in-scene. This is 
 //   contingent on a re-implemention of the `_is_shown()` function, which is queried within `attachable()`.
 //   The result is similar to how `show_only()` works, but without conflicting with BOSL2's tags functions.
@@ -659,7 +659,7 @@ module partno(partno, start_new=false, distance=20, anno=undef, as_string=undef)
 //   modules' echos will be called multiple times; therefore when using `LIST_PARTS`-triggered part listings, you  
 //   will probably want to de-duplicate part numbers before programmatically iterating through them.
 //
-// See Also: partno(), expand_parts(), collapse_parts(), highlight_part()
+// See Also: partno(), expand_parts(), collapse_parts(), isolated_part()
 //
 // Example(3D): `partno()`'s Example 4, above, but with using `partno_attach()`: a hirearchical part-number use, showing inheritance of the part-numbers within a tree:
 //   partno(30)
@@ -702,8 +702,8 @@ module partno(partno, start_new=false, distance=20, anno=undef, as_string=undef)
 //                   annotate(show=["label", "partno"]); 
 //       }
 //
-// Example(3D): A sphere attached to the top of a cube, but with `HIGHLIGHT_PART` set to limit only the sphere:
-//   HIGHLIGHT_PART = "EX-1-1";
+// Example(3D): A sphere attached to the top of a cube, but with `ISOLATED_PART` set to limit only the sphere:
+//   ISOLATED_PART = "EX-1-1";
 //   partno(1)
 //      cuboid(5)
 //         partno_attach(TOP, BOTTOM, partno=1)
@@ -870,14 +870,14 @@ module partno_attach(parent, child, overlap, align, spin=0, norot, inset=0, shif
 
             // ## 6 ## anchor lines: conditionally draw annotation extension lines to 
             // the specified anchor. 
-            if (!highlight_part() && expand_parts() && ok_to_annotate())
+            if (!isolated_part() && expand_parts() && ok_to_annotate())
                 attach(anchor)
                     anno_dashed_line(partno_t_offset, anchor=TOP);
         }
     }
 }
 
-
+/*
 /// Function: _is_shown()
 /// Usage:
 ///   bool = _is_shown();
@@ -892,7 +892,7 @@ module partno_attach(parent, child, overlap, align, spin=0, norot, inset=0, shif
 ///   The changes were kept to an absolute minimum; BOSL2's `attach()` functionality is otherwise as-is, as of 
 ///   2025-02-13. 
 /// See Also: anno_partno_is_shown(), partno_attach()
-function _is_shown() =
+function x_is_shown() =
     assert(is_list($tags_shown) || $tags_shown=="ALL")
     assert(is_list($tags_hidden))
     let(
@@ -906,15 +906,27 @@ function _is_shown() =
         hidden = in_list($tag, $tags_hidden),
         // ## 1 ## obtain partno_shown: examine anno_partno_is_shown() for the test boolean:
         partno_shown = anno_partno_is_shown(),
-        _ = echo( //log_debug_if((true || highlight_part() == partno()),
-            str([partno(), highlight_part(), shown, hidden, partno_shown])
+        _ = echo( //log_debug_if((true || isolate_part() == partno()),
+            str([partno(), isolated_part(), shown, hidden, partno_shown])
             )
     )
     // ## 2 ## modified test: the addition of `&& partno_shown` to the truth test:
     shown && !hidden && partno_shown;
+*/
 
 
 
+/*
+module anno_highlight_part(force_highlight=false) {
+    if (anno_partno_is_shown() || force_highlight) {
+        children();
+    } else {
+        hide_this() children();
+    }
+}
+*/
+
+/*
 /// Function: anno_partno_is_shown()
 /// Usage:
 ///   bool = anno_partno_is_shown();
@@ -927,7 +939,7 @@ function _is_shown() =
 ///   partno_str = The part-number string to examine (eg, `010-A-1-1`). If unspecified, the current part-number is derived from the hierarchy.
 ///   highlighted_part = The part number string to compare against. If unspecitied, the current value from `highlighted_part()` will be used.
 /// See Also: partno(), partno_attach()
-function anno_partno_is_shown(partno_str=partno(), highlighted_part=highlight_part()) =
+function anno_partno_is_shown(partno_str=partno(), highlighted_part=isolated_part()) =
     assert(is_string(partno_str), str("Part-number (",partno_str,") is not a string")) 
     assert(is_string(highlighted_part) || is_undef(highlighted_part), str("Highlighted part-number (",highlighted_part,") is not a string")) 
     let(
@@ -936,7 +948,7 @@ function anno_partno_is_shown(partno_str=partno(), highlighted_part=highlight_pa
             : true
     )
     allowed;
-
+*/
 
 // Function&Module: expand_parts()
 // Synopsis: Determines or gates the expansion of parts
@@ -982,14 +994,14 @@ module collapse_parts() {
 }
 
 
-// Function&Module: highlight_part()
+// Function&Module: isolate_part()
 // Synopsis: Determines or gates the highlight of a single part
 // Usage: as a function:
-//   partno = highlight_part();
-//   partno = highlight_part(<pn=undef>);
+//   partno = isolate_part();
+//   partno = isolate_part(<pn=undef>);
 // Usage: as a module:
-//   highlight_part() [CHILDREN];
-//   highlight_part(<pn=undef>) [CHILDREN];
+//   isolate_part() [CHILDREN];
+//   isolate_part(<pn=undef>) [CHILDREN];
 // Description:
 //   When called as a function when a part is to be highlighted in the 
 //   current hierarchy, returns the part number `partno` as a string of the 
@@ -1001,20 +1013,75 @@ module collapse_parts() {
 //   match the value of HIGHTLIGHTED_PART. If optionally called with a 
 //   part number string `pn`, that part number will be used for consideration. 
 //   .
-//   In both function and module modes, `highlight_part()` will examine 
-//   an optional `pn` argument, the locally scoped `$_HIGHLIGHT_PART`, 
-//   and finally the global `HIGHLIGHT_PART`, in that order. 
+//   In both function and module modes, `isolate_part()` will examine 
+//   an optional `pn` argument, the locally scoped `$_ISOLATED_PART`, 
+//   and finally the global `ISOLATED_PART`, in that order. 
 //
 // Arguments:
 //   pn = An optional part-number; if specified, will take precedence over the locally scoped and global values. Default: `undef`
 //
-function highlight_part(pn=undef) = _first([pn, $_HIGHLIGHT_PART, HIGHLIGHT_PART]);
-    
-module highlight_part(partno=undef) {
-    assert(is_string(partno) || is_undef(partno), str("Provided part-number '", partno, "' is not a string"));
-    let($_HIGHLIGHT_PART = highlight_part(partno))
-        children();
+
+
+// isolate_part(): return true if the part named at partno matches the part named in ISOLATED_PART or if no part is to be isolated:
+function isolate_part(partno=partno(), isolated_part=isolated_part()) = 
+    assert(is_string(partno) || is_undef(partno), str("Part-number (",partno,") is not a string")) 
+    assert(is_string(isolated_part) || is_undef(isolated_part), str("Highlighted part-number (",isolated_part,") is not a string")) 
+    let(
+        allowed = _defined(isolated_part)
+            ? partno == isolated_part
+            : true
+    )
+    allowed;
+
+// isolate_part() applies an isolation var at a specific hirearchy. 
+module isolate_part(partno=undef) {
+    assert(is_string(partno) || is_undef(partno), str("Provided part-number '", partno, "' is not a string"))
+        let($_ISOLATED_PART = isolated_part(partno))
+            children();
 }
+
+
+// isolate_attachable_part(): gates parts from isolation when triggered by attachable() (via _show_ghost() override)
+module isolate_attachable_part() {
+    let($_ISOLATED_PART = isolated_part())
+    if (!isolate_part()) {
+        hide_this() children();
+    } else {
+        children();
+    }
+}
+
+/// Internal Function: _show_ghost()
+/// Description:
+///   Overloaded `_show_ghost()` from BOSL2's attachments.scad.
+///   The changes were kept to an absolute minimum; BOSL2's `_show_ghost()` functionality is otherwise as-is, as of 
+///   2025-02-13. 
+/// See Also: partno_attach(), isolated_part()
+module _show_ghost()
+{  
+    if (($ghost || $ghost_this) && !$ghosting)
+        %union(){
+           $ghosting=true;
+           _show_highlight() isolate_attachable_part() children();
+        }
+    else _show_highlight() isolate_attachable_part() children();
+}
+
+
+
+// Function: isolated_part()
+// Synopsis: Returns the current part number to isolate
+// Usage:
+//   part_str = isolated_part();
+//   part_str = isolated_part(<pn=undef>);
+// Description:
+//   When a part is to be highlighted in the 
+//   current hierarchy, returns the part number `partno` as a string of the 
+//   part to be highlighted. If optionally called with a part number string `pn`,
+//   that part number will be used for consideration.
+// Arguments:
+//   pn = An optional part-number; if specified, will take precedence over the locally scoped and global values. Default: `undef`
+function isolated_part(pn=undef) = _first([pn, $_ISOLATED_PART, ISOLATED_PART]);
 
 
 /// Module: anno_dashed_line()
