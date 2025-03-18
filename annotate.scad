@@ -1001,8 +1001,8 @@ module collapse_parts() {
 //                 partno_attach(TOP, BOTTOM, partno=4)
 //                   recolor("green") cuboid(5);
 //
-// Example(3D): same example as above, but using the globally-set `ISOLATE_PART` variable instead. This allows you to model as normal, and selectively isolate a complex scene without inserting `isolate_part()` calls throughout your source:
-//   ISOLATE_PART = "EX-1-2-3";
+// Example(3D): same example as above, but using the globally-set `ISOLATED_PART` variable instead. This allows you to model as normal, and selectively isolate a complex scene without inserting `isolate_part()` calls throughout your source:
+//   ISOLATED_PART = "EX-1-2-3";
 //   partno(1)
 //     recolor("red") cuboid(30)
 //       partno_attach(TOP, BOTTOM, partno=2)
