@@ -575,9 +575,11 @@ module partno(partno, start_new=false, distance=20, anno=undef, as_string=undef)
         echo(str("PART:", partno()));
     if (expand_parts()) {
         move(anno_partno_translate(d=distance))
-            children();
+            isolate_attachable_part()
+                children();
     } else {
-        children();
+        isolate_attachable_part()
+            children();
     }
 }
 
